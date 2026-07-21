@@ -605,11 +605,14 @@ kbd {
 
 .solution-grid {
   width: 130px;
+}
+
+.solution-grid.solution-animating {
   animation: reveal-card 520ms cubic-bezier(.2,.8,.2,1) both;
   animation-delay: var(--delay, 0ms);
 }
 
-.solution-grid.needs-rotation {
+.solution-grid.needs-rotation.solution-animating {
   animation-name: reveal-and-rotate;
   animation-duration: 900ms;
 }
@@ -630,6 +633,9 @@ kbd {
 
 .final-model .solution-grid {
   box-shadow: 0 0 0 2px var(--accent), 0 0 28px rgba(138, 247, 211, 0.22);
+}
+
+.final-model .solution-grid.solution-animating {
   animation-delay: 560ms;
 }
 
@@ -869,6 +875,18 @@ kbd {
     margin-top: 12px;
   }
 
+  .selected-marker {
+    top: 5px;
+    right: 5px;
+    bottom: auto;
+    left: auto;
+    width: 18px;
+    height: 18px;
+    font-size: 0.66rem;
+  }
+}
+
+@media (max-width: 620px) {
   .selected-marker {
     top: 5px;
     right: 5px;
