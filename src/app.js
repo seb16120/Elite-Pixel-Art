@@ -15,8 +15,8 @@ const PHASE = Object.freeze({
 
 const DURATION = Object.freeze({
   SHARED: 60,
-  ANSWER: 10,
-  EXCLUSIVE: 20,
+  ANSWER: 15,
+  EXCLUSIVE: 30,
   TOTAL: 300,
 });
 
@@ -240,7 +240,7 @@ function handleIncorrectAnswer() {
 
   if (origin === PHASE.SHARED) {
     startExclusive(player === 1 ? 2 : 1);
-    elements.statusMessage.textContent = `Réponse incorrecte du joueur ${player}. Son adversaire a 20 secondes exclusives.`;
+    elements.statusMessage.textContent = `Réponse incorrecte du joueur ${player}. Son adversaire a 30 secondes exclusives.`;
   } else {
     startSharedMinute(`Réponse incorrecte du joueur ${player}. Une nouvelle minute commune commence.`);
   }
@@ -389,7 +389,7 @@ function tick(now) {
       } else if (state.phase === PHASE.ANSWER) {
         handleIncorrectAnswer();
       } else if (state.phase === PHASE.EXCLUSIVE) {
-        startSharedMinute('Les 20 secondes exclusives sont écoulées. Une nouvelle minute commune commence.');
+        startSharedMinute('Les 30 secondes exclusives sont écoulées. Une nouvelle minute commune commence.');
       }
     } else {
       updateTimers();
