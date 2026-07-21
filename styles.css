@@ -527,6 +527,25 @@ kbd {
   animation-delay: var(--delay, 0ms);
 }
 
+.solution-grid.needs-rotation {
+  animation-name: reveal-and-rotate;
+  animation-duration: 900ms;
+}
+
+@keyframes reveal-and-rotate {
+  from {
+    opacity: 0.25;
+    transform: translateY(16px) scale(0.92) rotate(var(--start-rotation));
+  }
+  38% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+}
+
 .final-model .solution-grid {
   box-shadow: 0 0 0 2px var(--accent), 0 0 28px rgba(138, 247, 211, 0.22);
   animation-delay: 560ms;
