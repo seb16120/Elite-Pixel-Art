@@ -1,4 +1,3 @@
-
 # Elite Pixel Art
 
 Un jeu de fusion mentale en duel : repérez trois cartes, imaginez leurs rotations et retrouvez l'unique superposition qui reproduit le modèle coloré.
@@ -25,6 +24,8 @@ Supabase synchronise et arbitre :
 - le premier buzzer reçu ;
 - les phases et les chronomètres ;
 - les manches et le score du FT3.
+
+Une superposition `X + X + Y` est invalide : une couleur majoritaire ne remplace plus la troisième couleur. Après un buzz, le joueur dispose de 15 secondes pour choisir ses cartes ; une erreur accorde 30 secondes exclusives à l'adversaire.
 
 Cette première version est volontairement amicale. La sélection gagnante est vérifiée dans le navigateur puis déclarée au serveur. Avant d'ajouter un classement ou de l'Elo, la validation complète de la solution devra être déplacée côté serveur afin d'empêcher un navigateur modifié de déclarer une fausse victoire.
 
