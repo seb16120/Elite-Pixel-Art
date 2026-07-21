@@ -932,6 +932,10 @@ kbd {
   }
 
   .verify-button.exclusive-turn:disabled {
-    opacity: 0.5;
+    color: #15192b;
+    background: #686c79;
+    filter: none;
+    opacity: 1;
+    box-shadow: 0 0 0 1px rgba(184, 255, 90, 0.35), 0 0 22px rgba(184, 255, 90, 0.28);
   }
 }
