@@ -259,7 +259,11 @@ function renderSolutionEquation() {
     label.textContent = `Carte ${cardIndex + 1} · ${degrees}°`;
 
     const rotatingGrid = createGrid(rotateCard(state.puzzle.cards[cardIndex], rotations[index]), 'solution-grid');
-    rotatingGrid.style.setProperty('--delay', `${index * 160}ms`);
+    rotatingGrid.style.setProperty('--delay', `${index * 180}ms`);
+    if (rotations[index] > 0) {
+      rotatingGrid.classList.add('needs-rotation');
+      rotatingGrid.style.setProperty('--start-rotation', `${rotations[index] * -90}deg`);
+    }
 
     cardWrap.append(label, rotatingGrid);
     elements.solutionEquation.append(cardWrap);
