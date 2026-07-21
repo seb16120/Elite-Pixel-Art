@@ -1,4 +1,3 @@
-
 .hidden { display: none !important; }
 
 .menu-page { min-height: 100vh; }
@@ -72,6 +71,31 @@
 .buzz-button:disabled { color: var(--muted); background: rgba(255,255,255,.05); cursor: default; opacity: .7; }
 .connection-dot { display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; background: var(--muted); }
 .connection-dot.online { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+
+.game-shell.waiting-turn .puzzle-layout,
+.game-shell.waiting-turn .fusion-legend {
+  filter: grayscale(.92) brightness(.56);
+  opacity: .58;
+  pointer-events: none;
+  user-select: none;
+  transition: filter .2s ease, opacity .2s ease;
+}
+.game-shell.waiting-turn .puzzle-layout { position: relative; }
+.game-shell.waiting-turn .puzzle-layout::after {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 22px;
+  color: var(--text);
+  background: rgba(7, 9, 20, .24);
+  content: "L’adversaire a la main";
+  font-size: clamp(1.15rem, 2.8vw, 2rem);
+  font-weight: 900;
+  letter-spacing: -.03em;
+  text-shadow: 0 3px 18px #070914;
+}
 
 @media (max-width: 780px) {
   .menu-hero { align-items: flex-start; flex-direction: column; padding-top: 50px; }
