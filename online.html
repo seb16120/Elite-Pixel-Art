@@ -1,0 +1,46 @@
+
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Elite Pixel Art, duel privé en ligne synchronisé en temps réel.">
+  <meta name="theme-color" content="#070914">
+  <title>Elite Pixel Art · 1v1 online</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" sizes="any">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="menu.css">
+</head>
+<body>
+  <main id="lobby-shell" class="lobby-shell">
+    <header class="lobby-header"><a class="back-link" href="index.html">← Menu des modes</a><span class="menu-brand"><span class="brand-model" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span>Elite Pixel Art</span></span></header>
+    <section id="connection-panel" class="lobby-card"><p id="connection-status" class="notice">Connexion sécurisée au service de jeu…</p></section>
+    <section id="lobby-screen" class="hidden">
+      <div class="lobby-intro"><p class="eyebrow">1v1 online · Bêta amicale</p><h1>Un modèle.<br>Deux navigateurs.</h1><p>Créez un salon privé ou rejoignez votre adversaire. Sur chaque appareil, <kbd>Espace</kbd> et <kbd>Entrée</kbd> déclenchent le même buzzer.</p></div>
+      <div class="lobby-grid">
+        <form id="create-form" class="lobby-card"><p class="eyebrow">Nouveau duel</p><h2>Créer un salon</h2><div class="field"><label for="create-name">Votre nom</label><input id="create-name" name="name" value="Joueur 1" minlength="2" maxlength="20" autocomplete="nickname" required></div><button class="verify-button" type="submit">Créer le salon</button></form>
+        <form id="join-form" class="lobby-card"><p class="eyebrow">Invitation reçue</p><h2>Rejoindre</h2><div class="field"><label for="join-name">Votre nom</label><input id="join-name" name="name" value="Joueur 2" minlength="2" maxlength="20" autocomplete="nickname" required></div><div class="field"><label for="room-code">Code à six caractères</label><input id="room-code" name="code" minlength="6" maxlength="6" autocomplete="off" required></div><button class="verify-button" type="submit">Rejoindre le salon</button></form>
+      </div>
+    </section>
+    <section id="waiting-screen" class="lobby-card hidden"><p class="eyebrow">Salon privé</p><h1>Préparez le duel</h1><div class="waiting-code"><div><span>Code d’invitation</span><br><strong id="waiting-code">———</strong></div><div class="lobby-actions"><button id="copy-code-button" class="secondary-button" type="button">Copier le code</button><button id="copy-link-button" class="secondary-button" type="button">Copier le lien</button></div></div><div id="players-list" class="players-list"></div><div class="lobby-actions"><button id="ready-button" class="verify-button" type="button">Je suis prêt</button><button id="leave-button" class="secondary-button" type="button">Quitter</button></div><p id="waiting-notice" class="notice">En attente de votre adversaire…</p></section>
+  </main>
+
+  <main id="game-shell" class="game-shell hidden">
+    <div class="online-toolbar"><button id="game-leave-button" class="back-link secondary-button" type="button">← Quitter le salon</button><span class="room-meta"><i id="connection-dot" class="connection-dot"></i><span id="connection-label">Synchronisation…</span> · Salon <strong id="game-code">———</strong></span></div>
+    <header class="game-header"><div><p class="eyebrow">Fusion mentale · 1v1 online</p><h1>Elite Pixel Art</h1></div><button id="rules-button" class="secondary-button" type="button">Règles</button></header>
+    <section class="scoreboard" aria-label="Score de la partie"><article class="player-panel player-one" data-player-panel="1"><div><span id="player-one-name" class="player-label">Joueur 1</span><strong>Espace / Entrée</strong></div><div class="score-pips" data-score="1"></div></article><div class="round-indicator"><span>FT3</span><strong id="round-number">Manche 1</strong></div><article class="player-panel player-two" data-player-panel="2"><div><span id="player-two-name" class="player-label">Joueur 2</span><strong>Espace / Entrée</strong></div><div class="score-pips" data-score="2"></div></article></section>
+    <section class="game-status" aria-live="polite"><div class="status-copy"><span id="phase-label" class="phase-label">Synchronisation</span><strong id="status-message">Chargement de la partie…</strong><button id="buzz-button" class="buzz-button" type="button" disabled>BUZZER · ESPACE OU ENTRÉE</button></div><div class="timers"><div class="timer-card"><span id="phase-timer-label">Temps de réflexion</span><strong id="phase-timer">1:00</strong></div><div class="timer-card timer-card-total"><span>Limite de la manche</span><strong id="total-timer">5:00</strong></div></div></section>
+    <section class="puzzle-layout"><article class="model-panel"><div class="section-heading"><span>Objectif</span><h2>Modèle à reproduire</h2></div><div id="model-grid" class="pixel-grid model-grid"></div><div class="model-note"><span class="note-icon">↻</span><p>Les cartes peuvent tourner par quarts de tour. Aucun miroir.</p></div></article><article class="cards-panel"><div class="section-heading cards-heading"><div><span>Sélection</span><h2>Choisissez exactement 3 cartes</h2></div><strong id="selection-count">0 / 3</strong></div><div id="cards-grid" class="cards-grid"></div><button id="verify-button" class="verify-button" type="button" disabled>Vérifier ma réponse</button></article></section>
+    <section class="fusion-legend"><span><i class="dot red"></i> + <i class="dot yellow"></i> = <i class="dot orange"></i></span><span><i class="dot red"></i> + <i class="dot blue"></i> = <i class="dot violet"></i></span><span><i class="dot yellow"></i> + <i class="dot blue"></i> = <i class="dot green"></i></span><span><i class="dot red"></i> + <i class="dot yellow"></i> + <i class="dot blue"></i> = <i class="dot black"></i></span></section>
+  </main>
+
+  <dialog id="reveal-dialog" class="game-dialog reveal-dialog"><div class="dialog-content"><p id="reveal-kicker" class="eyebrow">Solution</p><h2 id="reveal-title">Voici la combinaison unique</h2><p id="reveal-message"></p><div id="solution-equation" class="solution-equation"></div><button id="next-round-button" class="verify-button" type="button">Manche suivante</button></div></dialog>
+  <dialog id="rules-dialog" class="game-dialog rules-dialog"><div class="dialog-content"><button id="close-rules-button" class="dialog-close" type="button" aria-label="Fermer">×</button><p class="eyebrow">Comment jouer online</p><h2>Reproduisez mentalement le modèle</h2><ol><li>Les deux joueurs voient exactement la même énigme.</li><li>Sur chaque appareil, <kbd>Espace</kbd> ou <kbd>Entrée</kbd> déclenche votre buzzer.</li><li>Supabase décide quel buzzer arrive en premier.</li><li>Le joueur retenu dispose de 10 secondes pour sélectionner trois cartes.</li><li>Une erreur offre 20 secondes exclusives à l’adversaire.</li><li>Le premier joueur à 3 manches remporte le FT3.</li></ol><p>Cette première version online est amicale : le classement arrivera avec la validation serveur complète des solutions.</p></div></dialog>
+  <template id="card-template"><button class="puzzle-card" type="button"><span class="card-number"></span><span class="pixel-grid card-grid"></span><span class="selected-marker">✓</span></button></template>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
+  <script src="src/supabase-config.js"></script>
+  <script type="module" src="src/online.js"></script>
+</body>
+</html>
+
