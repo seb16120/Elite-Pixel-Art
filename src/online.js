@@ -194,6 +194,9 @@ function toggleCard(index) {
 function renderSelection() {
   el['selection-count'].textContent = `${selectedCards.length} / 3`;
   el['verify-button'].disabled = selectedCards.length !== 3 || !canChooseCards();
+  const exclusiveTurn = state.room.phase === PHASE.EXCLUSIVE
+    && state.room.active_player === state.seat;
+  el['verify-button'].classList.toggle('exclusive-turn', exclusiveTurn);
 }
 
 function renderScores() {
