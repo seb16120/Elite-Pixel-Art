@@ -1,49 +1,48 @@
 # Elite Pixel Art
 
-Jeu local à deux joueurs de manipulation mentale de cartes en grille 3 × 3.
+Un jeu de fusion mentale en duel : repérez trois cartes, imaginez leurs rotations et retrouvez l'unique superposition qui reproduit le modèle coloré.
 
-## Principe
+## Modes de jeu
 
-Un modèle coloré est affiché avec neuf cartes candidates. Les joueurs doivent retrouver les trois cartes qui, après une éventuelle rotation par quarts de tour et une superposition mentale, reproduisent exactement le modèle.
+### 1v1 local
 
-- Aucun miroir ni aucune symétrie axiale.
-- Les trois cartes se combinent simultanément, case par case.
-- Rouge + jaune = orange.
-- Rouge + bleu = violet.
-- Jaune + bleu = vert.
-- Rouge + jaune + bleu = noir.
-- Avec trois couleurs dont deux identiques, la couleur majoritaire gagne.
-- Les cases vides doivent également correspondre.
+Deux joueurs partagent le même écran :
 
-Chaque manche est générée puis contrôlée automatiquement parmi les 84 trios et les 64 dispositions de rotations possibles par trio. Une énigme n’est conservée que si elle possède exactement une solution complète.
+- Joueur 1 : `Espace`
+- Joueur 2 : `Entrée`
 
-## Déroulement
+Le jeu local historique est conservé dans `local.html` avec ses manches en FT3, son buzzer et ses chronomètres.
 
-- Joueur 1 : `Espace`.
-- Joueur 2 : `Entrée`.
-- Une minute de réflexion commune.
-- Après un buzz : 10 secondes pour sélectionner trois cartes et vérifier.
-- En cas d’erreur : 20 secondes exclusives pour l’adversaire.
-- Après la riposte, une nouvelle minute commune commence.
-- Limite absolue de cinq minutes par manche.
-- Premier joueur à trois manches gagnées : FT3.
+### 1v1 online — bêta amicale
 
-## Lancer le jeu
+Deux joueurs utilisent chacun leur navigateur et rejoignent un salon privé grâce à un code de six caractères. Sur chaque appareil, `Espace` **ou** `Entrée` déclenche le buzzer du joueur.
 
-Le projet utilise les modules JavaScript natifs. Il faut donc le servir avec un petit serveur local :
+Supabase synchronise et arbitre :
 
-```bash
-python -m http.server 8000
-```
+- les deux participants et leur état « prêt » ;
+- l'énigme commune grâce à une graine déterministe ;
+- le premier buzzer reçu ;
+- les phases et les chronomètres ;
+- les manches et le score du FT3.
 
-Puis ouvrir `http://localhost:8000`.
+Une superposition `X + X + Y` est invalide : une couleur majoritaire ne remplace plus la troisième couleur. Après un buzz, le joueur dispose de 15 secondes pour choisir ses cartes ; une erreur accorde 30 secondes exclusives à l'adversaire.
 
-## Tests
+Cette première version est volontairement amicale. La sélection gagnante est vérifiée dans le navigateur puis déclarée au serveur. Avant d'ajouter un classement ou de l'Elo, la validation complète de la solution devra être déplacée côté serveur afin d'empêcher un navigateur modifié de déclarer une fausse victoire.
 
-Aucune dépendance n’est nécessaire. Avec Node.js 20 ou plus récent :
+## Structure
 
-```bash
-npm test
-```
+- `index.html` : menu des modes ;
+- `local.html` et `src/app.js` : duel sur le même écran ;
+- `online.html` et `src/online.js` : salons privés en ligne ;
+- `src/engine.js` : génération et résolution des énigmes partagées ;
+- `supabase/elite-pixel-online.sql` : schéma, règles de sécurité et fonctions du mode online ;
+- `favicon.svg` : modèle pixelisé à atteindre.
 
-Les tests couvrent les rotations, les règles de fusion, la comparaison des trios et l’unicité des énigmes générées.
+Les objets Supabase utilisent exclusivement le préfixe `elite_pixel_` pour rester séparés des autres jeux hébergés dans le même projet.
+
+## Lancer en local
+
+Le projet ne nécessite ni compilation ni dépendance locale. Servez simplement le dossier avec un serveur HTTP statique, puis ouvrez `index.html`.
+
+La version publiée est disponible sur [GitHub Pages](https://seb16120.github.io/Elite-Pixel-Art/).
+

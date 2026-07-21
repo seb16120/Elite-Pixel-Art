@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <pattern id="empty" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="6" height="6" fill="#0c1020"/>
+      <rect width="2" height="6" fill="#151a31"/>
+    </pattern>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#070914"/>
+  <rect x="9" y="9" width="46" height="46" rx="8" fill="#151a31" stroke="#8af7d3" stroke-width="2"/>
+  <g stroke="#070914" stroke-width="2">
+    <path fill="#ff4f5e" d="M10 10h15v15H10z"/><path fill="url(#empty)" d="M25 10h14v15H25z"/><path fill="#4f7dff" d="M39 10h15v15H39z"/>
+    <path fill="#ffd84d" d="M10 25h15v14H10z"/><path fill="#050505" d="M25 25h14v14H25z"/><path fill="#9c55df" d="M39 25h15v14H39z"/>
+    <path fill="#2fcf78" d="M10 39h15v15H10z"/><path fill="#ff982e" d="M25 39h14v15H25z"/><path fill="url(#empty)" d="M39 39h15v15H39z"/>
+  </g>
+  <path d="M7 32h4M53 32h4M32 7v4M32 53v4" stroke="#f6f7ff" stroke-width="2" stroke-linecap="round"/>
+</svg>
+

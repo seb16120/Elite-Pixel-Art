@@ -7,6 +7,7 @@ export const CELL = Object.freeze({
   VIOLET: 5,
   GREEN: 6,
   BLACK: 7,
+  INVALID: 8,
 });
 
 export const ROTATIONS = Object.freeze([0, 1, 2, 3]);
@@ -48,9 +49,7 @@ export function fuseCell(values) {
 
   if (counts.size === 3) return CELL.BLACK;
 
-  for (const [color, count] of counts) {
-    if (count === 2) return color;
-  }
+  if (colors.length === 3 && counts.size === 2) return CELL.INVALID;
 
   throw new Error('Combinaison de couleurs invalide.');
 }
@@ -166,6 +165,8 @@ export function generatePuzzle({ random = Math.random, maxAttempts = 500 } = {})
     const model = mergeCards(sourceTrio.map((cardIndex, index) => (
       rotateCard(cards[cardIndex], sourceRotations[index])
     )));
+
+    if (model.includes(CELL.INVALID)) continue;
 
     const solutions = findSolutions(cards, model, { stopAt: 2 });
     if (solutions.length === 1) {
