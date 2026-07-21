@@ -171,6 +171,15 @@ function renderSelection() {
   const touchControls = usesTouchBuzzers();
   elements.verifyButton.disabled = !canSubmit || (touchControls && state.currentPlayer !== 1);
   elements.mobileVerifyTop.disabled = !canSubmit || state.currentPlayer !== 2;
+  const exclusiveTurn = state.phase === PHASE.EXCLUSIVE;
+  elements.verifyButton.classList.toggle(
+    'exclusive-turn',
+    exclusiveTurn && (!touchControls || state.currentPlayer === 1),
+  );
+  elements.mobileVerifyTop.classList.toggle(
+    'exclusive-turn',
+    exclusiveTurn && state.currentPlayer === 2,
+  );
 }
 
 function renderPlayers() {
