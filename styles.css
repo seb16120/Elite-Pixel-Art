@@ -631,7 +631,7 @@ kbd {
   }
 }
 
-.local-page .solution-grid.needs-rotation.solution-animating {
+.solution-grid.needs-rotation.solution-animating {
   animation-name: local-loop-rotate;
   animation-duration: 2600ms;
   animation-timing-function: cubic-bezier(.2,.8,.2,1);
