@@ -167,6 +167,7 @@ function renderCards() {
     fragment.querySelector('.card-number').textContent = index + 1;
     buildGrid(fragment.querySelector('.card-grid'), card);
     button.dataset.cardIndex = index;
+    button.classList.add(`model-slot-${CELL_CLASS[puzzle.model[index]] ?? 'empty'}`);
     button.classList.toggle('selected', selectedCards.includes(index));
     button.disabled = !canChooseCards();
     button.addEventListener('click', () => toggleCard(index));
