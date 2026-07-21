@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="menu.css">
 </head>
-<body>
+<body class="online-page">
   <main id="lobby-shell" class="lobby-shell">
     <header class="lobby-header"><a class="back-link" href="index.html">← Menu des modes</a><span class="menu-brand"><span class="brand-model" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span>Elite Pixel Art</span></span></header>
     <section id="connection-panel" class="lobby-card"><p id="connection-status" class="notice">Connexion sécurisée au service de jeu…</p></section>
@@ -24,6 +24,10 @@
     <section id="waiting-screen" class="lobby-card hidden"><p class="eyebrow">Salon privé</p><h1>Préparez le duel</h1><div class="waiting-code"><div><span>Code d’invitation</span><br><strong id="waiting-code">———</strong></div><div class="lobby-actions"><button id="copy-code-button" class="secondary-button" type="button">Copier le code</button><button id="copy-link-button" class="secondary-button" type="button">Copier le lien</button></div></div><div id="players-list" class="players-list"></div><div class="lobby-actions"><button id="ready-button" class="verify-button" type="button">Je suis prêt</button><button id="leave-button" class="secondary-button" type="button">Quitter</button></div><p id="waiting-notice" class="notice">En attente de votre adversaire…</p></section>
   </main>
 
+  <button id="mobile-online-buzzer" class="mobile-buzzer mobile-online-buzzer" type="button" disabled>
+    BUZZER
+  </button>
+
   <main id="game-shell" class="game-shell hidden">
     <div class="online-toolbar"><button id="game-leave-button" class="back-link secondary-button" type="button">← Quitter le salon</button><span class="room-meta"><i id="connection-dot" class="connection-dot"></i><span id="connection-label">Synchronisation…</span> · Salon <strong id="game-code">———</strong></span></div>
     <header class="game-header"><div><p class="eyebrow">Fusion mentale · 1v1 online</p><h1>Elite Pixel Art</h1></div><button id="rules-button" class="secondary-button" type="button">Règles</button></header>
@@ -34,7 +38,7 @@
   </main>
 
   <dialog id="reveal-dialog" class="game-dialog reveal-dialog"><div class="dialog-content"><p id="reveal-kicker" class="eyebrow">Solution</p><h2 id="reveal-title">Voici la combinaison unique</h2><p id="reveal-message"></p><div id="solution-equation" class="solution-equation"></div><button id="next-round-button" class="verify-button" type="button">Manche suivante</button></div></dialog>
-  <dialog id="rules-dialog" class="game-dialog rules-dialog"><div class="dialog-content"><button id="close-rules-button" class="dialog-close" type="button" aria-label="Fermer">×</button><p class="eyebrow">Comment jouer online</p><h2>Reproduisez mentalement le modèle</h2><ol><li>Les deux joueurs voient exactement la même énigme.</li><li>Une case contenant deux couleurs identiques et une troisième différente est invalide.</li><li>Sur chaque appareil, <kbd>Espace</kbd> ou <kbd>Entrée</kbd> déclenche votre buzzer.</li><li>Supabase décide quel buzzer arrive en premier.</li><li>Le joueur retenu dispose de 15 secondes pour sélectionner trois cartes.</li><li>Une erreur offre 30 secondes exclusives à l’adversaire.</li><li>Le premier joueur à 3 manches remporte le FT3.</li></ol><p>Cette première version online est amicale : le classement arrivera avec la validation serveur complète des solutions.</p></div></dialog>
+  <dialog id="rules-dialog" class="game-dialog rules-dialog"><div class="dialog-content"><button id="close-rules-button" class="dialog-close" type="button" aria-label="Fermer">×</button><p class="eyebrow">Comment jouer online</p><h2>Reproduisez mentalement le modèle</h2><ol><li>Les deux joueurs voient exactement la même énigme.</li><li>Une case contenant deux couleurs identiques et une troisième différente est invalide.</li><li>Au clavier, <kbd>Espace</kbd> ou <kbd>Entrée</kbd> déclenche votre buzzer.</li><li>Sur smartphone, utilisez le grand bouton tactile fixé en bas de l’écran.</li><li>Supabase décide quel buzzer arrive en premier.</li><li>Le joueur retenu dispose de 15 secondes pour sélectionner trois cartes.</li><li>Une erreur offre 30 secondes exclusives à l’adversaire.</li><li>Le premier joueur à 3 manches remporte le FT3.</li></ol><p>Cette première version online est amicale : le classement arrivera avec la validation serveur complète des solutions.</p></div></dialog>
   <template id="card-template"><button class="puzzle-card" type="button"><span class="card-number"></span><span class="pixel-grid card-grid"></span><span class="selected-marker">✓</span></button></template>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
