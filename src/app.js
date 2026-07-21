@@ -130,6 +130,7 @@ function renderCards() {
     const grid = fragment.querySelector('.card-grid');
 
     button.dataset.cardIndex = String(index);
+    button.classList.add(`model-slot-${CELL_CLASS[state.puzzle.model[index]] ?? 'empty'}`);
     button.setAttribute('aria-label', `Carte ${index + 1}`);
     number.textContent = String(index + 1).padStart(2, '0');
     grid.replaceChildren(...createGrid(card).children);
