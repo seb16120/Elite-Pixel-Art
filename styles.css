@@ -439,6 +439,26 @@ h2 {
 .card-grid {
   width: 100%;
   border-radius: 8px;
+  background: #171c31;
+  isolation: isolate;
+  opacity: 1;
+  filter: none;
+}
+
+.puzzle-card .pixel-cell.empty {
+  background:
+    linear-gradient(45deg, rgba(255,255,255,0.025) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.025) 75%),
+    linear-gradient(45deg, rgba(255,255,255,0.025) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.025) 75%),
+    #171c31;
+  background-position: 0 0, 5px 5px, 0 0;
+  background-size: 10px 10px, 10px 10px, auto;
+  opacity: 1;
+}
+
+.puzzle-card.selected .card-grid,
+.puzzle-card.selected .pixel-cell {
+  opacity: 1;
+  filter: none;
 }
 
 .selected-marker {
@@ -457,6 +477,7 @@ h2 {
   opacity: 0;
   transform: scale(0.7);
   transition: 140ms ease;
+  z-index: 4;
 }
 
 .puzzle-card.selected .selected-marker {
@@ -846,5 +867,15 @@ kbd {
 
   .local-page #verify-button {
     margin-top: 12px;
+  }
+
+  .selected-marker {
+    top: 5px;
+    right: 5px;
+    bottom: auto;
+    left: auto;
+    width: 18px;
+    height: 18px;
+    font-size: 0.66rem;
   }
 }
