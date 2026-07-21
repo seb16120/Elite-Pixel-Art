@@ -49,6 +49,7 @@ const elements = {
   cardsGrid: document.querySelector('#cards-grid'),
   cardTemplate: document.querySelector('#card-template'),
   verifyButton: document.querySelector('#verify-button'),
+  mobileVerifyTop: document.querySelector('#mobile-verify-top'),
   selectionCount: document.querySelector('#selection-count'),
   phaseLabel: document.querySelector('#phase-label'),
   statusMessage: document.querySelector('#status-message'),
@@ -62,10 +63,38 @@ const elements = {
   revealMessage: document.querySelector('#reveal-message'),
   solutionEquation: document.querySelector('#solution-equation'),
   nextRoundButton: document.querySelector('#next-round-button'),
+  closeRevealButton: document.querySelector('#close-reveal-button'),
+  endMenuButton: document.querySelector('#end-menu-button'),
+  mainMenuButton: document.querySelector('#main-menu-button'),
   rulesButton: document.querySelector('#rules-button'),
   rulesDialog: document.querySelector('#rules-dialog'),
   closeRulesButton: document.querySelector('#close-rules-button'),
 };
+
+let wakeLock = null;
+
+async function requestWakeLock() {
+  if (!('wakeLock' in navigator) || document.visibilityState !== 'visible' || state.phase === PHASE.MATCH_OVER || wakeLock) return;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; }, { once: true });
+  } catch {
+    wakeLock = null;
+  }
+}
+
+async function releaseWakeLock() {
+  const lock = wakeLock;
+  wakeLock = null;
+  if (lock) {
+    try { await lock.release(); } catch {}
+  }
+}
+
+function syncWakeLock() {
+  if (state.phase === PHASE.MATCH_OVER) void releaseWakeLock();
+  else void requestWakeLock();
+}
 
 function formatTime(seconds) {
   const safeSeconds = Math.max(0, Math.ceil(seconds));
@@ -137,7 +166,10 @@ function renderSelection() {
   });
 
   elements.selectionCount.textContent = `${state.selectedCards.length} / 3`;
-  elements.verifyButton.disabled = !isSelectionPhase() || state.selectedCards.length !== 3;
+  const canSubmit = isSelectionPhase() && state.selectedCards.length === 3;
+  const touchControls = usesTouchBuzzers();
+  elements.verifyButton.disabled = !canSubmit || (touchControls && state.currentPlayer !== 1);
+  elements.mobileVerifyTop.disabled = !canSubmit || state.currentPlayer !== 2;
 }
 
 function renderPlayers() {
@@ -319,11 +351,15 @@ function revealRound({ winner = null, reason }) {
   elements.revealMessage.textContent = reason;
 
   const matchWinner = winner && state.scores[winner] >= 3 ? winner : null;
+  elements.closeRevealButton.classList.toggle('hidden', !matchWinner);
+  elements.mainMenuButton.classList.toggle('hidden', !matchWinner);
+  elements.endMenuButton.classList.add('hidden');
   if (matchWinner) {
     state.phase = PHASE.MATCH_OVER;
     elements.revealKicker.textContent = `Victoire du joueur ${matchWinner}`;
     elements.revealTitle.textContent = 'Partie remportée !';
     elements.nextRoundButton.textContent = 'Rejouer un FT3';
+    syncWakeLock();
   } else {
     elements.nextRoundButton.textContent = 'Manche suivante';
   }
@@ -372,6 +408,9 @@ function createRound() {
 
 function startNextRound() {
   elements.revealDialog.close();
+  elements.endMenuButton.classList.add('hidden');
+  elements.closeRevealButton.classList.add('hidden');
+  elements.mainMenuButton.classList.add('hidden');
 
   if (state.phase === PHASE.MATCH_OVER) {
     state.scores = { 1: 0, 2: 0 };
@@ -382,6 +421,7 @@ function startNextRound() {
   }
 
   createRound();
+  syncWakeLock();
 }
 
 function tick(now) {
@@ -427,7 +467,18 @@ function handleKeydown(event) {
 }
 
 elements.verifyButton.addEventListener('click', submitAnswer);
+elements.mobileVerifyTop.addEventListener('click', submitAnswer);
 elements.nextRoundButton.addEventListener('click', startNextRound);
+elements.closeRevealButton.addEventListener('click', () => {
+  if (state.phase !== PHASE.MATCH_OVER) return;
+  elements.revealDialog.close();
+  elements.endMenuButton.classList.remove('hidden');
+});
+elements.endMenuButton.addEventListener('click', () => {
+  if (state.phase !== PHASE.MATCH_OVER) return;
+  elements.endMenuButton.classList.add('hidden');
+  elements.revealDialog.showModal();
+});
 elements.rulesButton.addEventListener('click', () => elements.rulesDialog.showModal());
 elements.closeRulesButton.addEventListener('click', () => elements.rulesDialog.close());
 elements.revealDialog.addEventListener('cancel', (event) => event.preventDefault());
@@ -442,7 +493,12 @@ document.querySelectorAll('[data-mobile-buzzer]').forEach((button) => {
   });
 });
 document.addEventListener('keydown', handleKeydown);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') syncWakeLock();
+});
+document.addEventListener('pointerdown', syncWakeLock);
 
 renderScores();
 createRound();
+syncWakeLock();
 requestAnimationFrame(tick);
