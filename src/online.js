@@ -1,4 +1,3 @@
-
 import {
   CELL,
   createSeededRandom,
@@ -299,6 +298,9 @@ function renderWaiting() {
 function renderGame() {
   show(el['lobby-shell'], false);
   show(el['game-shell']);
+  const waitingForOpponent = [PHASE.ANSWER, PHASE.EXCLUSIVE].includes(state.room.phase)
+    && state.room.active_player !== state.seat;
+  el['game-shell'].classList.toggle('waiting-turn', waitingForOpponent);
   el['game-code'].textContent = state.room.code;
   el['player-one-name'].textContent = playerName(1);
   el['player-two-name'].textContent = playerName(2);
