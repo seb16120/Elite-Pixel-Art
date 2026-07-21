@@ -923,3 +923,15 @@ kbd {
     font-size: 0.66rem;
   }
 }
+
+@media (max-width: 620px) {
+  .verify-button.exclusive-turn {
+    outline: 3px solid #b8ff5a;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 1px rgba(184, 255, 90, 0.35), 0 0 22px rgba(184, 255, 90, 0.28);
+  }
+
+  .verify-button.exclusive-turn:disabled {
+    opacity: 0.5;
+  }
+}
