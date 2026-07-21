@@ -230,6 +230,11 @@ function renderSolutionEquation() {
     grid.className = 'pixel-grid solution-grid';
     const rotation = puzzle.solution.rotations?.[index] ?? 0;
     buildGrid(grid, rotateCard(puzzle.cards[cardIndex], rotation));
+    grid.style.setProperty('--delay', `${index * 180}ms`);
+    if (rotation > 0) {
+      grid.classList.add('needs-rotation');
+      grid.style.setProperty('--start-rotation', `${rotation * -90}deg`);
+    }
     const label = document.createElement('strong');
     label.textContent = `Carte ${cardIndex + 1} · ${rotation * 90}°`;
     card.append(label, grid);
