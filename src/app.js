@@ -334,6 +334,15 @@ function renderSolutionEquation() {
   elements.solutionEquation.append(modelWrap);
 }
 
+function playSolutionAnimations() {
+  const grids = [...elements.solutionEquation.querySelectorAll('.solution-grid')];
+  grids.forEach((grid) => grid.classList.remove('solution-animating'));
+  void elements.solutionEquation.offsetWidth;
+  requestAnimationFrame(() => {
+    grids.forEach((grid) => grid.classList.add('solution-animating'));
+  });
+}
+
 function revealRound({ winner = null, reason }) {
   state.phase = PHASE.REVEAL;
   state.currentPlayer = null;
@@ -366,6 +375,7 @@ function revealRound({ winner = null, reason }) {
   }
 
   elements.revealDialog.showModal();
+  playSolutionAnimations();
 }
 
 function submitAnswer() {
@@ -479,6 +489,7 @@ elements.endMenuButton.addEventListener('click', () => {
   if (state.phase !== PHASE.MATCH_OVER) return;
   elements.endMenuButton.classList.add('hidden');
   elements.revealDialog.showModal();
+  playSolutionAnimations();
 });
 elements.rulesButton.addEventListener('click', () => elements.rulesDialog.showModal());
 elements.closeRulesButton.addEventListener('click', () => elements.rulesDialog.close());
