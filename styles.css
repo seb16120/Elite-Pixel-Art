@@ -294,9 +294,10 @@ h2 {
 .pixel-cell.empty {
   background:
     linear-gradient(45deg, rgba(255,255,255,0.025) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.025) 75%),
-    linear-gradient(45deg, rgba(255,255,255,0.025) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.025) 75%);
-  background-position: 0 0, 5px 5px;
-  background-size: 10px 10px;
+    linear-gradient(45deg, rgba(255,255,255,0.025) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.025) 75%),
+    #171c31;
+  background-position: 0 0, 5px 5px, 0 0;
+  background-size: 10px 10px, 10px 10px, auto;
 }
 
 .red { background: var(--red); }
@@ -427,10 +428,6 @@ h2 {
   box-shadow: inset 0 0 0 2px #b8ff5a, 0 0 20px rgba(184, 255, 90, 0.22);
 }
 
-.puzzle-card.selected .card-grid {
-  filter: saturate(0.48) brightness(0.86);
-  opacity: 0.88;
-}
 
 .card-number {
   color: var(--muted);
@@ -446,15 +443,15 @@ h2 {
 
 .selected-marker {
   position: absolute;
-  top: 7px;
-  right: 7px;
-  display: none;
+  bottom: 7px;
+  left: 7px;
+  display: grid;
   place-items: center;
   width: 23px;
   height: 23px;
   border-radius: 50%;
   color: #07130f;
-  background: var(--accent);
+  background: #b8ff5a;
   font-size: 0.8rem;
   font-weight: 900;
   opacity: 0;
