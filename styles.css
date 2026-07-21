@@ -338,24 +338,83 @@ h2 {
 }
 
 .puzzle-card {
+  --slot-rgb: 255, 255, 255;
+  --slot-border-rgb: var(--slot-rgb);
+  --slot-border-opacity: 0.12;
+  --slot-opacity: 0.035;
+  --slot-selected-opacity: 0.055;
   position: relative;
   display: flex;
   align-items: center;
   gap: 11px;
   min-width: 0;
   padding: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(var(--slot-border-rgb), var(--slot-border-opacity));
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.035);
+  background: rgba(var(--slot-rgb), var(--slot-opacity));
   cursor: pointer;
-  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
+}
+
+.puzzle-card.model-slot-red {
+  --slot-rgb: 255, 79, 94;
+  --slot-border-opacity: 0.95;
+  --slot-opacity: 0.88;
+  --slot-selected-opacity: 0.42;
+}
+
+.puzzle-card.model-slot-yellow {
+  --slot-rgb: 255, 216, 77;
+  --slot-border-opacity: 0.95;
+  --slot-opacity: 0.9;
+  --slot-selected-opacity: 0.43;
+}
+
+.puzzle-card.model-slot-blue {
+  --slot-rgb: 79, 125, 255;
+  --slot-border-opacity: 0.95;
+  --slot-opacity: 0.86;
+  --slot-selected-opacity: 0.41;
+}
+
+.puzzle-card.model-slot-orange {
+  --slot-rgb: 255, 152, 46;
+  --slot-border-opacity: 0.95;
+  --slot-opacity: 0.9;
+  --slot-selected-opacity: 0.43;
+}
+
+.puzzle-card.model-slot-violet {
+  --slot-rgb: 156, 85, 223;
+  --slot-border-opacity: 0.95;
+  --slot-opacity: 0.86;
+  --slot-selected-opacity: 0.41;
+}
+
+.puzzle-card.model-slot-green {
+  --slot-rgb: 47, 207, 120;
+  --slot-border-opacity: 0.95;
+  --slot-opacity: 0.86;
+  --slot-selected-opacity: 0.41;
+}
+
+.puzzle-card.model-slot-black {
+  --slot-rgb: 5, 5, 5;
+  --slot-border-rgb: 255, 255, 255;
+  --slot-border-opacity: 0.18;
+  --slot-opacity: 0.94;
+  --slot-selected-opacity: 0.64;
+}
+
+.puzzle-card:not(.model-slot-empty, .model-slot-black) .card-number {
+  color: #0b1022;
 }
 
 .puzzle-card:not(:disabled):hover {
   z-index: 1;
   transform: translateY(-2px);
-  border-color: rgba(138, 247, 211, 0.55);
-  background: rgba(138, 247, 211, 0.06);
+  border-color: rgba(var(--slot-border-rgb), 1);
+  background: rgba(var(--slot-rgb), min(1, calc(var(--slot-opacity) + 0.08)));
 }
 
 .puzzle-card:disabled {
@@ -363,9 +422,14 @@ h2 {
 }
 
 .puzzle-card.selected {
-  border-color: var(--accent);
-  background: rgba(138, 247, 211, 0.1);
-  box-shadow: inset 0 0 0 1px var(--accent), 0 8px 22px rgba(138, 247, 211, 0.1);
+  border-color: #b8ff5a;
+  background: rgba(var(--slot-rgb), var(--slot-selected-opacity));
+  box-shadow: inset 0 0 0 2px #b8ff5a, 0 0 20px rgba(184, 255, 90, 0.22);
+}
+
+.puzzle-card.selected .card-grid {
+  filter: saturate(0.48) brightness(0.86);
+  opacity: 0.88;
 }
 
 .card-number {
@@ -384,7 +448,7 @@ h2 {
   position: absolute;
   top: 7px;
   right: 7px;
-  display: grid;
+  display: none;
   place-items: center;
   width: 23px;
   height: 23px;
