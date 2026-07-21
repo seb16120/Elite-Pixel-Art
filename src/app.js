@@ -145,6 +145,16 @@ function renderPlayers() {
     const player = Number(panel.dataset.playerPanel);
     panel.classList.toggle('active', state.currentPlayer === player && isSelectionPhase());
   });
+
+  document.querySelectorAll('[data-mobile-buzzer]').forEach((button) => {
+    const player = Number(button.dataset.mobileBuzzer);
+    button.disabled = state.phase !== PHASE.SHARED;
+    button.classList.toggle('active', state.currentPlayer === player && isSelectionPhase());
+  });
+}
+
+function usesTouchBuzzers() {
+  return window.matchMedia('(max-width: 950px) and (pointer: coarse)').matches;
 }
 
 function setStatus(phaseLabel, message, timerLabel) {
@@ -157,7 +167,9 @@ function updatePhaseCopy() {
   if (state.phase === PHASE.SHARED) {
     setStatus(
       'Réflexion commune',
-      'J1 : Espace · J2 : Entrée. Buzzez seulement quand vous avez votre trio.',
+      usesTouchBuzzers()
+        ? 'J1 buzze en bas · J2 buzze en haut. Appuyez seulement quand vous avez votre trio.'
+        : 'J1 : Espace · J2 : Entrée. Buzzez seulement quand vous avez votre trio.',
       'Temps de réflexion',
     );
   } else if (state.phase === PHASE.ANSWER) {
@@ -421,6 +433,13 @@ elements.closeRulesButton.addEventListener('click', () => elements.rulesDialog.c
 elements.revealDialog.addEventListener('cancel', (event) => event.preventDefault());
 elements.rulesDialog.addEventListener('click', (event) => {
   if (event.target === elements.rulesDialog) elements.rulesDialog.close();
+});
+document.querySelectorAll('[data-mobile-buzzer]').forEach((button) => {
+  button.addEventListener('click', () => {
+    if (elements.rulesDialog.open || elements.revealDialog.open) return;
+    if (state.phase !== PHASE.SHARED) return;
+    startAnswer(Number(button.dataset.mobileBuzzer));
+  });
 });
 document.addEventListener('keydown', handleKeydown);
 
