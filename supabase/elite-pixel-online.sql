@@ -1,4 +1,3 @@
-
 -- Elite Pixel Art · 1v1 online beta
 -- Objects are deliberately prefixed to remain isolated from Bingo and Otrio.
 
@@ -270,7 +269,7 @@ begin
 
   update public.elite_pixel_rooms
   set phase = 'answer', active_player = v_seat,
-      phase_deadline = least(total_deadline, clock_timestamp() + interval '10 seconds'),
+      phase_deadline = least(total_deadline, clock_timestamp() + interval '15 seconds'),
       version = version + 1, updated_at = clock_timestamp()
   where id = p_room_id;
 end;
@@ -314,7 +313,7 @@ begin
   elsif v_room.phase = 'answer' then
     update public.elite_pixel_rooms
     set phase = 'exclusive', active_player = v_other,
-        phase_deadline = least(total_deadline, clock_timestamp() + interval '20 seconds'),
+        phase_deadline = least(total_deadline, clock_timestamp() + interval '30 seconds'),
         last_reason = 'Réponse incorrecte : chance exclusive à l’adversaire.',
         version = version + 1, updated_at = clock_timestamp()
     where id = p_room_id;
@@ -354,7 +353,7 @@ begin
       v_other := case v_room.active_player when 1 then 2 else 1 end;
       update public.elite_pixel_rooms
       set phase = 'exclusive', active_player = v_other,
-          phase_deadline = least(total_deadline, clock_timestamp() + interval '20 seconds'),
+          phase_deadline = least(total_deadline, clock_timestamp() + interval '30 seconds'),
           last_reason = 'Temps de réponse écoulé : chance exclusive à l’adversaire.',
           version = version + 1, updated_at = clock_timestamp()
       where id = p_room_id;
