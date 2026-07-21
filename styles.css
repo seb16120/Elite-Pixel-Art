@@ -631,6 +631,32 @@ kbd {
   }
 }
 
+.local-page .solution-grid.needs-rotation.solution-animating {
+  animation-name: local-loop-rotate;
+  animation-duration: 2600ms;
+  animation-timing-function: cubic-bezier(.2,.8,.2,1);
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+}
+
+@keyframes local-loop-rotate {
+  0%,
+  12% {
+    opacity: 0.35;
+    transform: translateY(16px) scale(0.92) rotate(var(--start-rotation));
+  }
+  42%,
+  82% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+  82.01%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(16px) scale(0.92) rotate(var(--start-rotation));
+  }
+}
+
 .final-model .solution-grid {
   box-shadow: 0 0 0 2px var(--accent), 0 0 28px rgba(138, 247, 211, 0.22);
 }
