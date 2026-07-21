@@ -41,7 +41,8 @@ const el = Object.fromEntries([
   'phase-timer', 'total-timer', 'model-grid', 'cards-grid',
   'selection-count', 'verify-button', 'rules-button', 'rules-dialog',
   'close-rules-button', 'reveal-dialog', 'reveal-kicker', 'reveal-title',
-  'reveal-message', 'solution-equation', 'next-round-button', 'card-template',
+  'reveal-message', 'solution-equation', 'next-round-button',
+  'close-reveal-button', 'end-menu-button', 'main-menu-button', 'card-template',
 ].map((id) => [id, document.getElementById(id)]));
 
 let client;
@@ -56,6 +57,35 @@ let pollTimer = null;
 let refreshInFlight = null;
 let lastRenderVersion = null;
 let connected = false;
+let wakeLock = null;
+let finishedDialogDismissed = false;
+
+function onlineGameInProgress() {
+  return Boolean(state && state.room.phase !== PHASE.WAITING && state.room.phase !== PHASE.FINISHED);
+}
+
+async function requestWakeLock() {
+  if (!('wakeLock' in navigator) || document.visibilityState !== 'visible' || !onlineGameInProgress() || wakeLock) return;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; }, { once: true });
+  } catch {
+    wakeLock = null;
+  }
+}
+
+async function releaseWakeLock() {
+  const lock = wakeLock;
+  wakeLock = null;
+  if (lock) {
+    try { await lock.release(); } catch {}
+  }
+}
+
+function syncWakeLock() {
+  if (onlineGameInProgress()) void requestWakeLock();
+  else void releaseWakeLock();
+}
 
 function show(node, visible = true) {
   node?.classList.toggle('hidden', !visible);
@@ -264,18 +294,24 @@ function renderSolutionEquation() {
 
 function renderDialog() {
   const phase = state.room.phase;
+  const finished = phase === PHASE.FINISHED;
   if (![PHASE.REVEAL, PHASE.FINISHED].includes(phase)) {
+    finishedDialogDismissed = false;
+    show(el['end-menu-button'], false);
     if (el['reveal-dialog'].open) el['reveal-dialog'].close();
     return;
   }
-  el['reveal-kicker'].textContent = phase === PHASE.FINISHED ? 'FT3 terminé' : 'Manche terminée';
+  show(el['close-reveal-button'], finished);
+  show(el['main-menu-button'], finished);
+  show(el['end-menu-button'], finished && finishedDialogDismissed);
+  el['reveal-kicker'].textContent = finished ? 'FT3 terminé' : 'Manche terminée';
   el['reveal-title'].textContent = state.room.last_reason ?? 'Voici la combinaison unique';
   el['reveal-message'].textContent = phase === PHASE.FINISHED
     ? 'Vous pouvez analyser la solution, puis relancer un nouveau FT3.'
     : 'Comparez votre raisonnement à la solution avant la manche suivante.';
-  el['next-round-button'].textContent = phase === PHASE.FINISHED ? 'Nouveau FT3' : 'Manche suivante';
+  el['next-round-button'].textContent = finished ? 'Nouveau FT3' : 'Manche suivante';
   renderSolutionEquation();
-  if (!el['reveal-dialog'].open) el['reveal-dialog'].showModal();
+  if (!finishedDialogDismissed && !el['reveal-dialog'].open) el['reveal-dialog'].showModal();
 }
 
 function renderWaiting() {
@@ -324,6 +360,7 @@ function render() {
   if (!state) return;
   if (state.room.phase === PHASE.WAITING) renderWaiting();
   else renderGame();
+  syncWakeLock();
 }
 
 function remaining(deadline) {
@@ -394,6 +431,8 @@ function clearRoom() {
   puzzleSeed = null;
   selectedCards = [];
   lastRenderVersion = null;
+  finishedDialogDismissed = false;
+  void releaseWakeLock();
   localStorage.removeItem('elite-pixel-room-id');
   clearInterval(pollTimer);
   pollTimer = null;
@@ -490,6 +529,8 @@ async function verifyAnswer() {
 
 async function nextRound() {
   el['next-round-button'].disabled = true;
+  finishedDialogDismissed = false;
+  show(el['end-menu-button'], false);
   try {
     await rpc('elite_pixel_next_round', { p_room_id: roomId });
     if (el['reveal-dialog'].open) el['reveal-dialog'].close();
@@ -528,6 +569,18 @@ function bindEvents() {
   el['mobile-online-buzzer'].addEventListener('click', buzz);
   el['verify-button'].addEventListener('click', verifyAnswer);
   el['next-round-button'].addEventListener('click', nextRound);
+  el['close-reveal-button'].addEventListener('click', () => {
+    if (state?.room.phase !== PHASE.FINISHED) return;
+    finishedDialogDismissed = true;
+    el['reveal-dialog'].close();
+    show(el['end-menu-button']);
+  });
+  el['end-menu-button'].addEventListener('click', () => {
+    if (state?.room.phase !== PHASE.FINISHED) return;
+    finishedDialogDismissed = false;
+    show(el['end-menu-button'], false);
+    el['reveal-dialog'].showModal();
+  });
   el['leave-button'].addEventListener('click', leaveRoom);
   el['game-leave-button'].addEventListener('click', leaveRoom);
   el['copy-code-button'].addEventListener('click', () => copyText(state.room.code, el['copy-code-button'], 'Code copié !'));
@@ -538,6 +591,10 @@ function bindEvents() {
   });
   el['rules-button'].addEventListener('click', () => el['rules-dialog'].showModal());
   el['close-rules-button'].addEventListener('click', () => el['rules-dialog'].close());
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') syncWakeLock();
+  });
+  document.addEventListener('pointerdown', syncWakeLock);
   document.addEventListener('keydown', (event) => {
     if (!['Space', 'Enter'].includes(event.code) || event.repeat) return;
     if (['INPUT', 'TEXTAREA', 'BUTTON'].includes(document.activeElement?.tagName)) return;
