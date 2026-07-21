@@ -59,6 +59,7 @@ let lastRenderVersion = null;
 let connected = false;
 let wakeLock = null;
 let finishedDialogDismissed = false;
+let renderedSolutionKey = null;
 
 function onlineGameInProgress() {
   return Boolean(state && state.room.phase !== PHASE.WAITING && state.room.phase !== PHASE.FINISHED);
@@ -293,11 +294,21 @@ function renderSolutionEquation() {
   el['solution-equation'].append(equals, model);
 }
 
+function playSolutionAnimations() {
+  const grids = [...el['solution-equation'].querySelectorAll('.solution-grid')];
+  grids.forEach((grid) => grid.classList.remove('solution-animating'));
+  void el['solution-equation'].offsetWidth;
+  requestAnimationFrame(() => {
+    grids.forEach((grid) => grid.classList.add('solution-animating'));
+  });
+}
+
 function renderDialog() {
   const phase = state.room.phase;
   const finished = phase === PHASE.FINISHED;
   if (![PHASE.REVEAL, PHASE.FINISHED].includes(phase)) {
     finishedDialogDismissed = false;
+    renderedSolutionKey = null;
     show(el['end-menu-button'], false);
     if (el['reveal-dialog'].open) el['reveal-dialog'].close();
     return;
@@ -311,8 +322,15 @@ function renderDialog() {
     ? 'Vous pouvez analyser la solution, puis relancer un nouveau FT3.'
     : 'Comparez votre raisonnement à la solution avant la manche suivante.';
   el['next-round-button'].textContent = finished ? 'Nouveau FT3' : 'Manche suivante';
-  renderSolutionEquation();
-  if (!finishedDialogDismissed && !el['reveal-dialog'].open) el['reveal-dialog'].showModal();
+  const solutionKey = `${puzzleSeed}:${state.room.round_number}`;
+  if (renderedSolutionKey !== solutionKey) {
+    renderSolutionEquation();
+    renderedSolutionKey = solutionKey;
+  }
+  if (!finishedDialogDismissed && !el['reveal-dialog'].open) {
+    el['reveal-dialog'].showModal();
+    playSolutionAnimations();
+  }
 }
 
 function renderWaiting() {
@@ -581,6 +599,7 @@ function bindEvents() {
     finishedDialogDismissed = false;
     show(el['end-menu-button'], false);
     el['reveal-dialog'].showModal();
+    playSolutionAnimations();
   });
   el['leave-button'].addEventListener('click', leaveRoom);
   el['game-leave-button'].addEventListener('click', leaveRoom);
