@@ -591,6 +591,9 @@ function bindEvents() {
   el['mobile-online-buzzer'].addEventListener('click', buzz);
   el['verify-button'].addEventListener('click', verifyAnswer);
   el['next-round-button'].addEventListener('click', nextRound);
+  el['main-menu-button'].addEventListener('click', () => {
+    clearRoom();
+  });
   el['close-reveal-button'].addEventListener('click', () => {
     if (state?.room.phase !== PHASE.FINISHED) return;
     finishedDialogDismissed = true;
@@ -634,6 +637,12 @@ async function init() {
     await ensureSession();
     if (roomId) {
       try {
+        const savedState = await rpc('elite_pixel_get_state', { p_room_id: roomId });
+        if (savedState?.room?.phase === PHASE.FINISHED) {
+          clearRoom();
+          showLobby();
+          return;
+        }
         await enterRoom(roomId);
         return;
       } catch {
