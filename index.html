@@ -1,134 +1,73 @@
+
 <!doctype html>
 <html lang="fr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Elite Pixel Art, jeu local à deux joueurs de fusion mentale de cartes 3 × 3.">
-  <title>Elite Pixel Art</title>
+  <meta name="description" content="Elite Pixel Art, duel de fusion mentale en local ou en ligne.">
+  <meta name="theme-color" content="#070914">
+  <title>Elite Pixel Art · Choisir un mode</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" sizes="any">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="menu.css">
 </head>
-<body>
-  <main class="game-shell">
-    <header class="game-header">
-      <div>
-        <p class="eyebrow">Fusion mentale · 2 joueurs</p>
-        <h1>Elite Pixel Art</h1>
-      </div>
-      <button id="rules-button" class="secondary-button" type="button">Règles</button>
+<body class="menu-page">
+  <main class="menu-shell">
+    <header class="menu-header">
+      <a class="menu-brand" href="index.html" aria-label="Elite Pixel Art, accueil">
+        <span class="brand-model" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+        <span>Elite Pixel Art</span>
+      </a>
+      <a class="secondary-button" href="https://seb16120.github.io/Brain-Games-Website/">Brain Games</a>
     </header>
 
-    <section class="scoreboard" aria-label="Score de la partie">
-      <article class="player-panel player-one" data-player-panel="1">
+    <section class="menu-hero">
+      <div class="menu-copy">
+        <p class="eyebrow">Fusion mentale · Duel de rapidité</p>
+        <h1>Voyez les trois cartes.<br><em>Formez le modèle.</em><br>Buzzez avant l’autre.</h1>
+        <p>Superposez mentalement trois cartes, faites-les pivoter et retrouvez l’unique combinaison qui reproduit le modèle coloré.</p>
+      </div>
+
+      <div class="target-showcase" aria-label="Exemple de modèle à atteindre">
+        <span class="target-label">Modèle à atteindre</span>
+        <div class="target-grid" aria-hidden="true">
+          <i class="red"></i><i class="empty"></i><i class="blue"></i>
+          <i class="yellow"></i><i class="black"></i><i class="violet"></i>
+          <i class="green"></i><i class="orange"></i><i class="empty"></i>
+        </div>
+        <span class="target-caption">3 cartes · 4 rotations · 1 solution</span>
+      </div>
+    </section>
+
+    <section class="mode-grid" aria-label="Choix du mode de jeu">
+      <a class="mode-card local-mode" href="local.html">
+        <span class="mode-number">01</span>
         <div>
-          <span class="player-label">Joueur 1</span>
-          <strong>Espace</strong>
+          <p class="eyebrow">Même écran</p>
+          <h2>1v1 local</h2>
+          <p>Deux joueurs partagent le clavier et le plateau.</p>
+          <div class="key-row"><kbd>Espace</kbd><span>J1</span><strong>VS</strong><span>J2</span><kbd>Entrée</kbd></div>
         </div>
-        <div class="score-pips" data-score="1" aria-label="Score du joueur 1"></div>
-      </article>
+        <span class="mode-action">Jouer en local <b>→</b></span>
+      </a>
 
-      <div class="round-indicator">
-        <span>FT3</span>
-        <strong id="round-number">Manche 1</strong>
-      </div>
-
-      <article class="player-panel player-two" data-player-panel="2">
+      <a class="mode-card online-mode" href="online.html">
+        <span class="mode-number">02</span>
         <div>
-          <span class="player-label">Joueur 2</span>
-          <strong>Entrée</strong>
+          <p class="eyebrow">Deux navigateurs</p>
+          <h2>1v1 online</h2>
+          <p>Créez un salon privé et partagez son code.</p>
+          <div class="key-row"><kbd>Espace</kbd><span>ou</span><kbd>Entrée</kbd><strong>= votre buzzer</strong></div>
         </div>
-        <div class="score-pips" data-score="2" aria-label="Score du joueur 2"></div>
-      </article>
+        <span class="mode-action">Créer ou rejoindre <b>→</b></span>
+      </a>
     </section>
 
-    <section class="game-status" aria-live="polite">
-      <div class="status-copy">
-        <span id="phase-label" class="phase-label">Réflexion commune</span>
-        <strong id="status-message">Trouvez les trois cartes qui forment le modèle.</strong>
-      </div>
-      <div class="timers">
-        <div class="timer-card">
-          <span id="phase-timer-label">Temps de réflexion</span>
-          <strong id="phase-timer">1:00</strong>
-        </div>
-        <div class="timer-card timer-card-total">
-          <span>Limite de la manche</span>
-          <strong id="total-timer">5:00</strong>
-        </div>
-      </div>
-    </section>
-
-    <section class="puzzle-layout">
-      <article class="model-panel">
-        <div class="section-heading">
-          <span>Objectif</span>
-          <h2>Modèle à reproduire</h2>
-        </div>
-        <div id="model-grid" class="pixel-grid model-grid" aria-label="Modèle à reproduire"></div>
-        <div class="model-note">
-          <span class="note-icon">↻</span>
-          <p>Les cartes peuvent tourner par quarts de tour. Aucun miroir.</p>
-        </div>
-      </article>
-
-      <article class="cards-panel">
-        <div class="section-heading cards-heading">
-          <div>
-            <span>Sélection</span>
-            <h2>Choisissez exactement 3 cartes</h2>
-          </div>
-          <strong id="selection-count">0 / 3</strong>
-        </div>
-        <div id="cards-grid" class="cards-grid" aria-label="Neuf cartes proposées"></div>
-        <button id="verify-button" class="verify-button" type="button" disabled>
-          Vérifier ma réponse
-        </button>
-      </article>
-    </section>
-
-    <section class="fusion-legend" aria-label="Règles de fusion des couleurs">
-      <span><i class="dot red"></i> + <i class="dot yellow"></i> = <i class="dot orange"></i></span>
-      <span><i class="dot red"></i> + <i class="dot blue"></i> = <i class="dot violet"></i></span>
-      <span><i class="dot yellow"></i> + <i class="dot blue"></i> = <i class="dot green"></i></span>
-      <span><i class="dot red"></i> + <i class="dot yellow"></i> + <i class="dot blue"></i> = <i class="dot black"></i></span>
-      <span>2 couleurs identiques sur 3 : majorité</span>
-    </section>
+    <footer class="menu-footer">
+      <span>FT3 · Une minute commune · Dix secondes pour répondre</span>
+      <span>Mode online en bêta amicale</span>
+    </footer>
   </main>
-
-  <dialog id="reveal-dialog" class="game-dialog reveal-dialog">
-    <div class="dialog-content">
-      <p id="reveal-kicker" class="eyebrow">Solution</p>
-      <h2 id="reveal-title">Voici la combinaison unique</h2>
-      <p id="reveal-message"></p>
-      <div id="solution-equation" class="solution-equation"></div>
-      <button id="next-round-button" class="verify-button" type="button">Manche suivante</button>
-    </div>
-  </dialog>
-
-  <dialog id="rules-dialog" class="game-dialog rules-dialog">
-    <div class="dialog-content">
-      <button id="close-rules-button" class="dialog-close" type="button" aria-label="Fermer">×</button>
-      <p class="eyebrow">Comment jouer</p>
-      <h2>Reproduisez mentalement le modèle</h2>
-      <ol>
-        <li>Observez les 9 cartes et imaginez-en exactement 3 superposées.</li>
-        <li>Chaque carte peut tourner de 0°, 90°, 180° ou 270°, sans miroir.</li>
-        <li>J1 buzze avec <kbd>Espace</kbd>, J2 avec <kbd>Entrée</kbd>.</li>
-        <li>Après un buzz, le joueur a 10 secondes pour sélectionner 3 cartes.</li>
-        <li>Une erreur donne 20 secondes exclusives à l’adversaire, puis une nouvelle minute commune.</li>
-        <li>Le premier joueur à 3 manches remporte la partie.</li>
-      </ol>
-      <p>Chaque énigme possède un seul trio valide et une seule disposition de rotations.</p>
-    </div>
-  </dialog>
-
-  <template id="card-template">
-    <button class="puzzle-card" type="button">
-      <span class="card-number"></span>
-      <span class="pixel-grid card-grid"></span>
-      <span class="selected-marker">✓</span>
-    </button>
-  </template>
-
-  <script type="module" src="src/app.js"></script>
 </body>
 </html>
+
