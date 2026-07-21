@@ -37,6 +37,7 @@ const el = Object.fromEntries([
   'game-shell', 'game-leave-button', 'connection-dot', 'connection-label',
   'game-code', 'player-one-name', 'player-two-name', 'round-number',
   'phase-label', 'status-message', 'buzz-button', 'phase-timer-label',
+  'mobile-online-buzzer',
   'phase-timer', 'total-timer', 'model-grid', 'cards-grid',
   'selection-count', 'verify-button', 'rules-button', 'rules-dialog',
   'close-rules-button', 'reveal-dialog', 'reveal-kicker', 'reveal-title',
@@ -202,6 +203,7 @@ function createPuzzle(seed) {
 function setPhaseCopy() {
   const room = state.room;
   el['buzz-button'].disabled = room.phase !== PHASE.SHARED || !connected;
+  el['mobile-online-buzzer'].disabled = room.phase !== PHASE.SHARED || !connected;
   const ownTurn = room.active_player === state.seat;
   const copies = {
     [PHASE.SHARED]: ['Buzzer ouvert', 'Espace ou Entrée : soyez le premier à répondre.', 'Temps de réflexion'],
@@ -523,6 +525,7 @@ function bindEvents() {
   el['room-code'].addEventListener('input', () => { el['room-code'].value = el['room-code'].value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
   el['ready-button'].addEventListener('click', setReady);
   el['buzz-button'].addEventListener('click', buzz);
+  el['mobile-online-buzzer'].addEventListener('click', buzz);
   el['verify-button'].addEventListener('click', verifyAnswer);
   el['next-round-button'].addEventListener('click', nextRound);
   el['leave-button'].addEventListener('click', leaveRoom);
