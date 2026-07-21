@@ -27,9 +27,13 @@ test('deux couleurs différentes sans troisième couleur produisent une secondai
   assert.equal(fuseCell([CELL.YELLOW, CELL.BLUE, CELL.EMPTY]), CELL.GREEN);
 });
 
-test('une couleur majoritaire l’emporte dans une fusion de trois cartes', () => {
-  assert.equal(fuseCell([CELL.RED, CELL.RED, CELL.BLUE]), CELL.RED);
-  assert.equal(fuseCell([CELL.YELLOW, CELL.BLUE, CELL.BLUE]), CELL.BLUE);
+test('une superposition de type X + X + Y est invalide', () => {
+  assert.equal(fuseCell([CELL.RED, CELL.RED, CELL.BLUE]), CELL.INVALID);
+  assert.equal(fuseCell([CELL.YELLOW, CELL.BLUE, CELL.BLUE]), CELL.INVALID);
+});
+
+test('deux couleurs identiques et une case vide conservent la couleur', () => {
+  assert.equal(fuseCell([CELL.RED, CELL.RED, CELL.EMPTY]), CELL.RED);
 });
 
 test('la fusion se fait case par case', () => {
