@@ -710,3 +710,80 @@ kbd {
     display: none;
   }
 }
+
+.mobile-verify-top {
+  display: none;
+}
+
+.end-menu-button {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.end-dialog-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.end-dialog-actions .verify-button {
+  margin-top: 0;
+}
+
+.main-menu-button {
+  display: block;
+  padding: 15px 18px;
+  text-align: center;
+  text-decoration: none;
+}
+
+@media (max-width: 950px) and (pointer: coarse) {
+  .local-page .mobile-verify-top {
+    display: block;
+    margin: 0 0 10px;
+    transform: rotate(180deg);
+  }
+
+  .local-page .cards-panel {
+    padding: 14px;
+  }
+
+  .local-page .cards-heading {
+    flex-wrap: nowrap;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .local-page .cards-heading > div > span {
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+  }
+
+  .local-page .cards-heading h2 {
+    font-size: clamp(0.9rem, 4vw, 1.05rem);
+  }
+
+  .local-page #selection-count {
+    flex: 0 0 auto;
+    font-size: 0.88rem;
+    white-space: nowrap;
+  }
+
+  .local-page .cards-grid {
+    width: 94%;
+    gap: 5px;
+    margin-inline: auto;
+  }
+
+  .local-page .puzzle-card {
+    padding: 5px;
+    border-radius: 11px;
+  }
+
+  .local-page .card-number {
+    font-size: 0.65rem;
+  }
+
+  .local-page #verify-button {
+    margin-top: 12px;
+  }
+}
