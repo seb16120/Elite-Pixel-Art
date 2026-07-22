@@ -951,3 +951,187 @@ kbd {
     box-shadow: 0 0 0 1px rgba(184, 255, 90, 0.35), 0 0 22px rgba(184, 255, 90, 0.28);
   }
 }
+
+
+/* Repère d'exclusivité du duel local sur PC */
+.local-answer-controls {
+  display: grid;
+  grid-template-columns: minmax(58px, 0.16fr) minmax(0, 1fr) minmax(58px, 0.16fr);
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.local-answer-controls #verify-button {
+  margin-top: 0;
+}
+
+.local-exclusive-side {
+  display: grid;
+  place-items: center;
+  min-height: 48px;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.035);
+  font-weight: 950;
+  letter-spacing: 0.1em;
+  transition: border-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+
+.local-exclusive-side.active {
+  border-color: #b8ff5a;
+  color: #b8ff5a;
+  box-shadow:
+    0 0 0 1px rgba(184, 255, 90, 0.35),
+    0 0 22px rgba(184, 255, 90, 0.28);
+}
+
+/* Sur les PC peu hauts, tout le plateau reste dans la hauteur visible. */
+@media (min-width: 951px) and (min-height: 700px) and (max-height: 1100px) {
+  .local-page {
+    overflow: hidden;
+  }
+
+  .local-page .game-shell {
+    display: flex;
+    flex-direction: column;
+    width: min(1360px, calc(100% - 28px));
+    height: 100dvh;
+    padding: 10px 0 12px;
+  }
+
+  .local-page .online-toolbar,
+  .local-page .game-header,
+  .local-page .scoreboard,
+  .local-page .game-status,
+  .local-page .fusion-legend {
+    flex: 0 0 auto;
+  }
+
+  .local-page .game-header {
+    margin-bottom: 8px;
+  }
+
+  .local-page .game-header h1 {
+    font-size: clamp(2rem, 3vw, 2.75rem);
+  }
+
+  .local-page .scoreboard {
+    gap: 12px;
+    padding: 8px;
+  }
+
+  .local-page .player-panel {
+    min-height: 54px;
+    padding: 8px 12px;
+  }
+
+  .local-page .game-status {
+    gap: 14px;
+    margin-top: 8px;
+    padding: 10px 14px;
+  }
+
+  .local-page .timer-card {
+    min-width: 118px;
+    padding: 6px 10px;
+  }
+
+  .local-page .timer-card strong {
+    font-size: 1.2rem;
+  }
+
+  .local-page .puzzle-layout {
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .local-page .model-panel,
+  .local-page .cards-panel {
+    min-height: 0;
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .local-page .model-panel,
+  .local-page .cards-panel {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .local-page .section-heading {
+    flex: 0 0 auto;
+    margin-bottom: 8px;
+  }
+
+  .local-page .model-grid {
+    width: min(100%, 220px);
+    margin: auto;
+  }
+
+  .local-page .model-note {
+    flex: 0 0 auto;
+    margin-top: 6px;
+  }
+
+  .local-page .cards-grid {
+    flex: 1 1 auto;
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    min-height: 0;
+    gap: 6px;
+  }
+
+  .local-page .puzzle-card {
+    justify-content: center;
+    min-height: 0;
+    padding: 6px;
+    gap: 6px;
+    overflow: hidden;
+    border-radius: 11px;
+  }
+
+  .local-page .card-grid {
+    width: auto;
+    height: 100%;
+    max-width: calc(100% - 24px);
+    max-height: 100%;
+    flex: 0 1 auto;
+  }
+
+  .local-page .card-number {
+    flex: 0 0 auto;
+    font-size: 0.68rem;
+  }
+
+  .local-page .local-answer-controls {
+    flex: 0 0 auto;
+    margin-top: 7px;
+  }
+
+  .local-page .verify-button,
+  .local-page .local-exclusive-side {
+    min-height: 40px;
+    padding-block: 8px;
+  }
+
+  .local-page .fusion-legend {
+    gap: 6px 14px;
+    margin-top: 8px;
+    padding: 8px 12px;
+    font-size: 0.72rem;
+  }
+}
+
+@media (max-width: 950px) {
+  .local-answer-controls {
+    display: block;
+    margin-top: 0;
+  }
+
+  .local-exclusive-side {
+    display: none;
+  }
+}
