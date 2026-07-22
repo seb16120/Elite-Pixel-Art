@@ -15,7 +15,7 @@ create table if not exists public.elite_pixel_rooms (
   code text not null unique check (code ~ '^[A-Z0-9]{6}$'),
   host_id uuid not null,
   status text not null default 'waiting' check (status in ('waiting', 'active', 'finished')),
-  score_limit smallint not null default 3 check (score_limit between 1 and 9),
+  score_limit smallint not null default 2 check (score_limit in (1, 2, 3)),
   round_number smallint not null default 1 check (round_number > 0),
   phase text not null default 'waiting' check (phase in ('waiting', 'shared', 'answer', 'exclusive', 'reveal', 'match_finished')),
   active_player smallint check (active_player in (1, 2)),
@@ -34,6 +34,11 @@ create table if not exists public.elite_pixel_rooms (
 
 alter table public.elite_pixel_rooms
   add column if not exists puzzle_id uuid;
+
+alter table public.elite_pixel_rooms alter column score_limit set default 2;
+alter table public.elite_pixel_rooms drop constraint if exists elite_pixel_rooms_score_limit_check;
+alter table public.elite_pixel_rooms add constraint elite_pixel_rooms_score_limit_check
+  check (score_limit in (1, 2, 3));
 
 do $migration$
 begin
@@ -151,7 +156,12 @@ begin
 end;
 $$;
 
-create or replace function public.elite_pixel_create_room(p_display_name text)
+drop function if exists public.elite_pixel_create_room(text);
+
+create or replace function public.elite_pixel_create_room(
+  p_display_name text,
+  p_score_limit smallint default 2
+)
 returns jsonb
 language plpgsql
 security definer
@@ -165,12 +175,13 @@ declare
 begin
   if auth.uid() is null then raise exception 'AUTH_REQUIRED' using errcode = 'P0001'; end if;
   if char_length(v_name) < 2 then raise exception 'INVALID_NAME' using errcode = 'P0001'; end if;
+  if p_score_limit is null or p_score_limit not in (1, 2, 3) then raise exception 'INVALID_SCORE_LIMIT' using errcode = 'P0001'; end if;
 
   for i in 1..20 loop
     v_code := public.elite_pixel_random_code();
     begin
-      insert into public.elite_pixel_rooms (code, host_id)
-      values (v_code, auth.uid())
+      insert into public.elite_pixel_rooms (code, host_id, score_limit)
+      values (v_code, auth.uid(), p_score_limit)
       returning id into v_room_id;
       exit;
     exception when unique_violation then
@@ -676,7 +687,7 @@ grant select on public.elite_pixel_room_players to authenticated;
 revoke all on function public.elite_pixel_is_member(uuid) from public, anon, authenticated;
 revoke all on function public.elite_pixel_member_seat(uuid) from public, anon, authenticated;
 revoke all on function public.elite_pixel_random_code() from public, anon, authenticated;
-revoke all on function public.elite_pixel_create_room(text) from public, anon, authenticated;
+revoke all on function public.elite_pixel_create_room(text, smallint) from public, anon, authenticated;
 revoke all on function public.elite_pixel_join_room(text, text) from public, anon, authenticated;
 revoke all on function public.elite_pixel_get_state(uuid) from public, anon, authenticated;
 revoke all on function public.elite_pixel_set_ready(uuid, boolean) from public, anon, authenticated;
@@ -689,7 +700,7 @@ revoke all on function public.elite_pixel_leave_room(uuid) from public, anon, au
 
 grant execute on function public.elite_pixel_is_member(uuid) to authenticated;
 grant execute on function public.elite_pixel_member_seat(uuid) to authenticated;
-grant execute on function public.elite_pixel_create_room(text) to authenticated;
+grant execute on function public.elite_pixel_create_room(text, smallint) to authenticated;
 grant execute on function public.elite_pixel_join_room(text, text) to authenticated;
 grant execute on function public.elite_pixel_get_state(uuid) to authenticated;
 grant execute on function public.elite_pixel_set_ready(uuid, boolean) to authenticated;

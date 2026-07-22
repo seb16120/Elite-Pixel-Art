@@ -20,6 +20,11 @@ const DURATION = Object.freeze({
   TOTAL: 300,
 });
 
+const SCORE_LIMIT = (() => {
+  const requested = Number(new URLSearchParams(location.search).get('ft'));
+  return [1, 2, 3].includes(requested) ? requested : 2;
+})();
+
 const CELL_CLASS = Object.freeze({
   [CELL.EMPTY]: 'empty',
   [CELL.RED]: 'red',
@@ -57,6 +62,8 @@ const elements = {
   phaseTimer: document.querySelector('#phase-timer'),
   totalTimer: document.querySelector('#total-timer'),
   roundNumber: document.querySelector('#round-number'),
+  scoreFormat: document.querySelector('#score-format'),
+  rulesFormat: document.querySelector('#rules-format'),
   revealDialog: document.querySelector('#reveal-dialog'),
   revealKicker: document.querySelector('#reveal-kicker'),
   revealTitle: document.querySelector('#reveal-title'),
@@ -70,6 +77,9 @@ const elements = {
   rulesDialog: document.querySelector('#rules-dialog'),
   closeRulesButton: document.querySelector('#close-rules-button'),
 };
+
+elements.scoreFormat.textContent = `FT${SCORE_LIMIT}`;
+elements.rulesFormat.textContent = `FT${SCORE_LIMIT}`;
 
 let wakeLock = null;
 
@@ -145,7 +155,7 @@ function renderScores() {
     const scoreContainer = document.querySelector(`[data-score="${player}"]`);
     scoreContainer.replaceChildren();
 
-    for (let point = 0; point < 3; point += 1) {
+    for (let point = 0; point < SCORE_LIMIT; point += 1) {
       const pip = document.createElement('span');
       pip.className = `score-pip${point < state.scores[player] ? ' won' : ''}`;
       scoreContainer.append(pip);
@@ -377,7 +387,7 @@ function revealRound({ winner = null, reason }) {
 
   elements.revealMessage.textContent = reason;
 
-  const matchWinner = winner && state.scores[winner] >= 3 ? winner : null;
+  const matchWinner = winner && state.scores[winner] >= SCORE_LIMIT ? winner : null;
   elements.closeRevealButton.classList.toggle('hidden', !matchWinner);
   elements.mainMenuButton.classList.toggle('hidden', !matchWinner);
   elements.endMenuButton.classList.add('hidden');
@@ -385,7 +395,7 @@ function revealRound({ winner = null, reason }) {
     state.phase = PHASE.MATCH_OVER;
     elements.revealKicker.textContent = `Victoire du joueur ${matchWinner}`;
     elements.revealTitle.textContent = 'Partie remportée !';
-    elements.nextRoundButton.textContent = 'Rejouer un FT3';
+    elements.nextRoundButton.textContent = `Rejouer un FT${SCORE_LIMIT}`;
     syncWakeLock();
   } else {
     elements.nextRoundButton.textContent = 'Manche suivante';

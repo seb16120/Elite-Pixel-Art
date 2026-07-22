@@ -40,11 +40,11 @@ const CELL_CLASS = {
 const el = Object.fromEntries([
   'lobby-shell', 'connection-panel', 'connection-status', 'lobby-screen',
   'create-form', 'create-name', 'join-form', 'join-name', 'room-code',
-  'waiting-screen', 'waiting-code', 'copy-code-button', 'copy-link-button',
+  'waiting-screen', 'waiting-code', 'waiting-format', 'copy-code-button', 'copy-link-button',
   'players-list', 'ready-button', 'leave-button', 'waiting-notice',
   'game-shell', 'game-leave-button', 'connection-dot', 'connection-label',
   'game-code', 'scoreboard', 'player-one-name', 'player-two-name', 'round-number',
-  'phase-label', 'status-message', 'buzz-button', 'phase-timer-label',
+  'score-format', 'rules-format', 'phase-label', 'status-message', 'buzz-button', 'phase-timer-label',
   'mobile-online-buzzer',
   'phase-timer', 'total-timer', 'model-grid', 'cards-grid',
   'selection-count', 'verify-button', 'rules-button', 'rules-dialog',
@@ -104,6 +104,12 @@ function show(node, visible = true) {
 function cleanName(value) {
   return value.trim().replace(/\s+/g, ' ').slice(0, 20);
 }
+
+function scoreLimit() {
+  const value = Number(state?.room?.score_limit);
+  return [1, 2, 3].includes(value) ? value : 3;
+}
+function scoreFormat() { return `FT${scoreLimit()}`; }
 
 function roomCodeFromUrl() {
   return new URLSearchParams(location.search).get('room')?.trim().toUpperCase() ?? '';
@@ -215,7 +221,7 @@ function renderScores() {
   [1, 2].forEach((seat) => {
     const holder = document.querySelector(`[data-score="${seat}"]`);
     holder.replaceChildren();
-    for (let point = 0; point < 3; point += 1) {
+    for (let point = 0; point < scoreLimit(); point += 1) {
       const pip = document.createElement('i');
       pip.className = point < (scores[seat - 1] ?? 0) ? 'score-pip won' : 'score-pip';
       holder.append(pip);
@@ -301,7 +307,7 @@ function setPhaseCopy() {
       ? ['Seconde chance', 'Vous avez l’exclusivité : choisissez trois cartes.', 'Temps exclusif']
       : ['Adversaire', `${playerName(room.active_player)} a une chance exclusive.`, 'Temps exclusif'],
     [PHASE.REVEAL]: ['Manche terminée', room.last_reason ?? 'La solution est affichée.', 'Résultat'],
-    [PHASE.FINISHED]: ['Match terminé', room.last_reason ?? 'Le FT3 est terminé.', 'Résultat'],
+    [PHASE.FINISHED]: ['Match terminé', room.last_reason ?? `Le ${scoreFormat()} est terminé.`, 'Résultat'],
   };
   const [label, message, timerLabel] = copies[room.phase] ?? ['Synchronisation', 'État de partie en cours…', 'Temps'];
   el['phase-label'].textContent = label;
@@ -371,12 +377,12 @@ function renderDialog() {
   show(el['close-reveal-button'], finished);
   show(el['main-menu-button'], finished);
   show(el['end-menu-button'], finished && finishedDialogDismissed);
-  el['reveal-kicker'].textContent = finished ? 'FT3 terminé' : 'Manche terminée';
+  el['reveal-kicker'].textContent = finished ? `${scoreFormat()} terminé` : 'Manche terminée';
   el['reveal-title'].textContent = state.room.last_reason ?? 'Voici la combinaison unique';
   el['reveal-message'].textContent = phase === PHASE.FINISHED
-    ? 'Vous pouvez analyser la solution, puis relancer un nouveau FT3.'
+    ? `Vous pouvez analyser la solution, puis relancer un nouveau ${scoreFormat()}.`
     : 'Comparez votre raisonnement à la solution avant la manche suivante.';
-  el['next-round-button'].textContent = finished ? 'Nouveau FT3' : 'Manche suivante';
+  el['next-round-button'].textContent = finished ? `Nouveau ${scoreFormat()}` : 'Manche suivante';
   const solutionKey = `${puzzleSeed}:${state.room.round_number}`;
   if (renderedSolutionKey !== solutionKey) {
     renderSolutionEquation();
@@ -395,6 +401,7 @@ function renderWaiting() {
   show(el['lobby-screen'], false);
   show(el['waiting-screen']);
   el['waiting-code'].textContent = state.room.code;
+  el['waiting-format'].textContent = scoreFormat();
   el['players-list'].replaceChildren();
   state.players.forEach((player) => {
     const article = document.createElement('article');
@@ -424,6 +431,8 @@ function renderGame() {
   el.scoreboard.classList.toggle('exclusive-seat-1', exclusiveSeat === 1);
   el.scoreboard.classList.toggle('exclusive-seat-2', exclusiveSeat === 2);
   el['game-code'].textContent = state.room.code;
+  el['score-format'].textContent = scoreFormat();
+  el['rules-format'].textContent = scoreFormat();
   el['player-one-name'].textContent = playerName(1);
   el['player-two-name'].textContent = playerName(2);
   el['round-number'].textContent = `Manche ${state.room.round_number}`;
@@ -610,11 +619,15 @@ async function enterRoom(id) {
 async function createRoom(event) {
   event.preventDefault();
   const name = cleanName(el['create-name'].value);
-  if (name.length < 2) return;
+  const chosenLimit = Number(new FormData(el['create-form']).get('score-limit'));
+  if (name.length < 2 || ![1, 2, 3].includes(chosenLimit)) return;
   const button = event.submitter;
   button.disabled = true;
   try {
-    const result = await rpc('elite_pixel_create_room', { p_display_name: name });
+    const result = await rpc('elite_pixel_create_room', {
+      p_display_name: name,
+      p_score_limit: chosenLimit,
+    });
     await enterRoom(result.room_id);
   } catch (error) {
     showLobby(formatError(error), true);

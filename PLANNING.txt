@@ -29,8 +29,10 @@ P5 — Validation des réponses côté serveur — TERMINÉ
      ses trois cartes. Le serveur compare lui-même la sélection et attribue le
      point ; l’ancien paramètre vrai/faux a été supprimé.
 
-P6 — Choix du format FT1 / FT2 / FT3 — À FAIRE
-     Proposer uniquement FT1, FT2 et FT3. FT5 est volontairement exclu.
+P6 — Choix du format FT1 / FT2 / FT3 — TERMINÉ
+     Le mode local ouvre un sélecteur avant la partie. En ligne, le créateur
+     choisit le format du salon et l’adversaire rejoint automatiquement ce format.
+     FT5 reste volontairement exclu.
 
 P7 — Profils, statistiques et Elo — PLUS TARD
      Ajouter les comptes Brain Games, les statistiques propres au jeu et le

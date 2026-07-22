@@ -39,7 +39,7 @@
     </section>
 
     <section class="mode-grid" aria-label="Choix du mode de jeu">
-      <a class="mode-card local-mode" href="local.html">
+      <a id="local-mode-card" class="mode-card local-mode" href="local.html" aria-haspopup="dialog">
         <span class="mode-number">01</span>
         <div>
           <p class="eyebrow">Même écran</p>
@@ -63,10 +63,29 @@
     </section>
 
     <footer class="menu-footer">
-      <span>FT3 · Une minute commune · Quinze secondes pour répondre</span>
+      <span>FT1 / FT2 / FT3 · Une minute commune · Quinze secondes pour répondre</span>
       <span>Mode online en bêta amicale</span>
     </footer>
   </main>
+  <dialog id="format-dialog" class="game-dialog format-dialog" aria-labelledby="format-title">
+    <div class="dialog-content">
+      <button id="close-format-dialog" class="dialog-close" type="button" aria-label="Fermer">×</button>
+      <p class="eyebrow">1v1 local</p><h2 id="format-title">Choisissez le format</h2>
+      <p>Le premier joueur qui atteint le nombre de manches choisi remporte la partie.</p>
+      <div class="format-options">
+        <a class="format-option" href="local.html?ft=1"><strong>FT1</strong><span>Partie éclair</span></a>
+        <a class="format-option recommended" href="local.html?ft=2"><strong>FT2</strong><span>Équilibre recommandé</span></a>
+        <a class="format-option" href="local.html?ft=3"><strong>FT3</strong><span>Duel prolongé</span></a>
+      </div>
+    </div>
+  </dialog>
+  <script>
+    const localModeCard = document.querySelector('#local-mode-card');
+    const formatDialog = document.querySelector('#format-dialog');
+    localModeCard.addEventListener('click', (event) => { event.preventDefault(); formatDialog.showModal(); });
+    document.querySelector('#close-format-dialog').addEventListener('click', () => formatDialog.close());
+    formatDialog.addEventListener('click', (event) => { if (event.target === formatDialog) formatDialog.close(); });
+  </script>
 </body>
 </html>
 

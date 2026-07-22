@@ -11,7 +11,7 @@ Deux joueurs partagent le même écran :
 - Joueur 1 : `Espace`
 - Joueur 2 : `Entrée`
 
-Le jeu local historique est conservé dans `local.html` avec ses manches en FT3, son buzzer et ses chronomètres.
+Le mode local est conservé dans `local.html` avec son buzzer et ses chronomètres. Avant la partie, les joueurs choisissent un format FT1, FT2 ou FT3.
 
 ### 1v1 online — bêta amicale
 
@@ -23,7 +23,7 @@ Supabase synchronise et arbitre :
 - l'énigme commune grâce à une graine déterministe ;
 - le premier buzzer reçu ;
 - les phases et les chronomètres ;
-- les manches et le score du FT3 ;
+- les manches et le score du format FT1, FT2 ou FT3 choisi par le créateur ;
 - une fenêtre de reconnexion de 30 secondes avant toute victoire par forfait ;
 - une synchronisation adaptative regroupée, complétée par les événements Realtime.
 
