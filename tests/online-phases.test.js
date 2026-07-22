@@ -87,3 +87,16 @@ test('P4 regroupe la synchronisation de l’horloge et la lecture de l’état',
   assert.match(compactSql, /revoke all on function public\.elite_pixel_sync_state\(uuid\) from public, anon, authenticated/);
   assert.match(compactSql, /grant execute on function public\.elite_pixel_sync_state\(uuid\) to authenticated/);
 });
+
+test('P5 garde les solutions privées et valide les trois cartes côté serveur', () => {
+  assert.match(compactSql, /create table if not exists public\.elite_pixel_puzzles/);
+  assert.match(compactSql, /id uuid primary key default gen_random_uuid\(\)/);
+  assert.match(compactSql, /alter table public\.elite_pixel_puzzles enable row level security/);
+  assert.match(compactSql, /revoke all on table public\.elite_pixel_puzzles from public, anon, authenticated/);
+  assert.match(compactSql, /create index if not exists elite_pixel_rooms_puzzle_idx/);
+  assert.match(compactSql, /drop function if exists public\.elite_pixel_resolve_answer\(uuid, boolean\)/);
+  assert.match(compactSql, /p_selected_cards smallint\[\]/);
+  assert.match(compactSql, /v_correct := v_selected = v_solution/);
+  assert.match(compactSql, /when r\.phase in \('reveal', 'match_finished'\)[\s\S]*'trio'/);
+  assert.match(compactSql, /else null[\s\S]*from public\.elite_pixel_puzzles puzzle/);
+});
