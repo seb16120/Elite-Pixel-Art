@@ -23,9 +23,11 @@ P4 — Réduction des appels Supabase — TERMINÉ
      et 30 secondes après le match. Les événements Realtime sont appliqués
      directement, sans relecture supplémentaire de la base.
 
-P5 — Validation des réponses côté serveur — À FAIRE
-     Recalculer la solution dans Supabase afin qu'un navigateur modifié ne
-     puisse pas déclarer une fausse victoire. Requis avant le classement.
+P5 — Validation des réponses côté serveur — TERMINÉ
+     Supabase choisit l’énigme dans une banque déployée de 128 modèles uniques.
+     Le navigateur ne reçoit la solution qu’après la manche et envoie seulement
+     ses trois cartes. Le serveur compare lui-même la sélection et attribue le
+     point ; l’ancien paramètre vrai/faux a été supprimé.
 
 P6 — Choix du format FT1 / FT2 / FT3 — À FAIRE
      Proposer uniquement FT1, FT2 et FT3. FT5 est volontairement exclu.
