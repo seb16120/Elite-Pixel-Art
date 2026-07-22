@@ -17,9 +17,11 @@ P3 — Reconnexion avec délai de grâce — TERMINÉ
      Passé ce délai, le joueur resté présent gagne le match. Une reprise après
      une coupure simultanée ne déclenche pas de victoire immédiate injuste.
 
-P4 — Réduction des appels Supabase — À FAIRE
-     Diminuer les lectures et écritures inutiles tout en conservant une
-     synchronisation réactive entre les deux joueurs.
+P4 — Réduction des appels Supabase — TERMINÉ
+     Une requête groupée remplace les deux appels toutes les 1,2 seconde.
+     Le rythme adaptatif passe à 5 secondes en partie, 15 secondes en attente
+     et 30 secondes après le match. Les événements Realtime sont appliqués
+     directement, sans relecture supplémentaire de la base.
 
 P5 — Validation des réponses côté serveur — À FAIRE
      Recalculer la solution dans Supabase afin qu'un navigateur modifié ne
