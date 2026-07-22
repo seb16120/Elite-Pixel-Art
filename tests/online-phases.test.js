@@ -1,0 +1,66 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+
+const sql = await readFile(
+  new URL('../supabase/elite-pixel-online.sql', import.meta.url),
+  'utf8',
+);
+const compactSql = sql.replace(/\s+/g, ' ');
+
+test('un buzz ouvre une réponse exclusive de 15 secondes', () => {
+  assert.match(compactSql, /elite_pixel_buzz[\s\S]*phase = 'answer', active_player = v_seat[\s\S]*interval '15 seconds'/);
+});
+
+test('une réponse ratée donne 30 secondes exclusives à l’adversaire', () => {
+  assert.match(compactSql, /elsif v_room\.phase = 'answer' then[\s\S]*phase = 'exclusive', active_player = v_other[\s\S]*interval '30 seconds'/);
+});
+
+test('la fin du temps exclusif rouvre le jeu partagé pendant 60 secondes', () => {
+  assert.match(compactSql, /elsif v_room\.phase = 'exclusive' then[\s\S]*phase = 'shared', active_player = null[\s\S]*interval '60 seconds'/);
+});
+
+test('la limite totale révèle la solution sans attribuer de point', () => {
+  assert.match(compactSql, /clock_timestamp\(\) >= v_room\.total_deadline[\s\S]*phase = 'reveal', active_player = null, round_winner = null/);
+});
+
+test('quitter une partie active donne le match au joueur restant', () => {
+  assert.match(compactSql, /elite_pixel_leave_room[\s\S]*v_scores\[v_other\] := v_room\.score_limit[\s\S]*status = 'finished', phase = 'match_finished'/);
+});
+
+test('les opérations concurrentes verrouillent le salon avant mutation', () => {
+  for (const functionName of [
+    'elite_pixel_join_room',
+    'elite_pixel_set_ready',
+    'elite_pixel_buzz',
+    'elite_pixel_resolve_answer',
+    'elite_pixel_sync_clock',
+    'elite_pixel_next_round',
+    'elite_pixel_leave_room',
+  ]) {
+    const start = compactSql.indexOf(`function public.${functionName}`);
+    const end = compactSql.indexOf('create or replace function public.', start + 1);
+    const body = compactSql.slice(start, end === -1 ? undefined : end);
+    assert.notEqual(start, -1, `${functionName} doit exister`);
+    assert.match(body, /for update/, `${functionName} doit verrouiller le salon`);
+  }
+});
+
+test('les fonctions RPC ne sont pas exécutables par anon', () => {
+  for (const functionName of [
+    'elite_pixel_create_room',
+    'elite_pixel_join_room',
+    'elite_pixel_get_state',
+    'elite_pixel_set_ready',
+    'elite_pixel_buzz',
+    'elite_pixel_resolve_answer',
+    'elite_pixel_sync_clock',
+    'elite_pixel_next_round',
+    'elite_pixel_leave_room',
+  ]) {
+    assert.match(
+      compactSql,
+      new RegExp(`revoke all on function public\\.${functionName}\\([^;]+from public, anon, authenticated`),
+    );
+  }
+});
