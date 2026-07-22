@@ -198,7 +198,7 @@ function renderPlayers() {
     const player = Number(indicator.dataset.exclusiveSide);
     indicator.classList.toggle(
       'active',
-      state.phase === PHASE.EXCLUSIVE && state.currentPlayer === player,
+      isSelectionPhase() && state.currentPlayer === player,
     );
   });
 }
