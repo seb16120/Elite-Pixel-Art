@@ -1135,3 +1135,9 @@ kbd {
     display: none;
   }
 }
+
+
+.status-message.presence-warning {
+  color: var(--yellow);
+  text-shadow: 0 0 18px rgba(255, 216, 77, 0.22);
+}
