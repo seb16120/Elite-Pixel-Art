@@ -1,6 +1,15 @@
 -- Elite Pixel Art · 1v1 online beta
 -- Objects are deliberately prefixed to remain isolated from Bingo and Otrio.
 
+create table if not exists public.elite_pixel_puzzles (
+  id uuid primary key default gen_random_uuid(),
+  cards jsonb not null check (jsonb_typeof(cards) = 'array' and jsonb_array_length(cards) = 9),
+  model smallint[] not null check (cardinality(model) = 9),
+  solution_trio smallint[] not null check (cardinality(solution_trio) = 3),
+  solution_rotations smallint[] not null check (cardinality(solution_rotations) = 3),
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.elite_pixel_rooms (
   id uuid primary key default gen_random_uuid(),
   code text not null unique check (code ~ '^[A-Z0-9]{6}$'),
@@ -13,6 +22,7 @@ create table if not exists public.elite_pixel_rooms (
   phase_deadline timestamptz,
   total_deadline timestamptz,
   puzzle_seed bigint,
+  puzzle_id uuid references public.elite_pixel_puzzles(id),
   scores smallint[] not null default array[0, 0]::smallint[] check (cardinality(scores) = 2),
   round_winner smallint check (round_winner in (1, 2)),
   last_reason text,
@@ -21,6 +31,30 @@ create table if not exists public.elite_pixel_rooms (
   updated_at timestamptz not null default now(),
   finished_at timestamptz
 );
+
+alter table public.elite_pixel_rooms
+  add column if not exists puzzle_id uuid;
+
+do $migration$
+begin
+  if not exists (
+    select 1
+    from pg_catalog.pg_constraint
+    where conname = 'elite_pixel_rooms_puzzle_id_fkey'
+      and conrelid = 'public.elite_pixel_rooms'::regclass
+  ) then
+    alter table public.elite_pixel_rooms
+      add constraint elite_pixel_rooms_puzzle_id_fkey
+      foreign key (puzzle_id) references public.elite_pixel_puzzles(id);
+  end if;
+end;
+$migration$;
+
+update public.elite_pixel_rooms
+set puzzle_id = (
+  select id from public.elite_pixel_puzzles order by random() limit 1
+)
+where puzzle_id is null;
 
 create table if not exists public.elite_pixel_room_players (
   room_id uuid not null references public.elite_pixel_rooms(id) on delete cascade,
@@ -41,8 +75,14 @@ alter table public.elite_pixel_room_players
 create index if not exists elite_pixel_room_players_user_idx
   on public.elite_pixel_room_players (user_id, room_id);
 
+create index if not exists elite_pixel_rooms_puzzle_idx
+  on public.elite_pixel_rooms (puzzle_id);
+
+alter table public.elite_pixel_puzzles enable row level security;
 alter table public.elite_pixel_rooms enable row level security;
 alter table public.elite_pixel_room_players enable row level security;
+
+revoke all on table public.elite_pixel_puzzles from public, anon, authenticated;
 
 create or replace function public.elite_pixel_is_member(p_room_id uuid)
 returns boolean
@@ -211,16 +251,32 @@ begin
 
   select jsonb_build_object(
     'room', to_jsonb(r),
+    'puzzle', (
+      select jsonb_build_object(
+        'id', puzzle.id,
+        'cards', puzzle.cards,
+        'model', to_jsonb(puzzle.model),
+        'solution', case
+          when r.phase in ('reveal', 'match_finished') then jsonb_build_object(
+            'trio', to_jsonb(puzzle.solution_trio),
+            'rotations', to_jsonb(puzzle.solution_rotations)
+          )
+          else null
+        end
+      )
+      from public.elite_pixel_puzzles puzzle
+      where puzzle.id = r.puzzle_id
+    ),
     'players', coalesce((
       select jsonb_agg(jsonb_build_object(
-        'seat', p.seat,
-        'display_name', p.display_name,
-        'ready', p.ready,
-        'joined_at', p.joined_at,
-        'last_seen', p.last_seen
-      ) order by p.seat)
-      from public.elite_pixel_room_players p
-      where p.room_id = r.id
+        'seat', player.seat,
+        'display_name', player.display_name,
+        'ready', player.ready,
+        'joined_at', player.joined_at,
+        'last_seen', player.last_seen
+      ) order by player.seat)
+      from public.elite_pixel_room_players player
+      where player.room_id = r.id
     ), '[]'::jsonb),
     'seat', v_seat,
     'server_now', v_now
@@ -244,25 +300,50 @@ set search_path = pg_catalog, public
 as $$
 declare
   v_room public.elite_pixel_rooms%rowtype;
+  v_puzzle_id uuid;
+  v_now timestamptz := clock_timestamp();
 begin
   perform public.elite_pixel_member_seat(p_room_id);
-  select * into v_room from public.elite_pixel_rooms where id = p_room_id for update;
-  if v_room.status <> 'waiting' then raise exception 'ROOM_ALREADY_STARTED' using errcode = 'P0001'; end if;
+  select * into v_room
+  from public.elite_pixel_rooms
+  where id = p_room_id
+  for update;
+
+  if v_room.status <> 'waiting' then
+    raise exception 'ROOM_ALREADY_STARTED' using errcode = 'P0001';
+  end if;
 
   update public.elite_pixel_room_players
-  set ready = p_ready, last_seen = clock_timestamp()
+  set ready = p_ready, last_seen = v_now
   where room_id = p_room_id and user_id = auth.uid();
 
-  if (select count(*) = 2 and bool_and(ready) from public.elite_pixel_room_players where room_id = p_room_id) then
+  if (
+    select count(*) = 2 and bool_and(ready)
+    from public.elite_pixel_room_players
+    where room_id = p_room_id
+  ) then
+    select id into v_puzzle_id
+    from public.elite_pixel_puzzles
+    order by random()
+    limit 1;
+
+    if v_puzzle_id is null then
+      raise exception 'PUZZLE_BANK_EMPTY' using errcode = 'P0001';
+    end if;
+
     update public.elite_pixel_rooms
-    set status = 'active', phase = 'shared', puzzle_seed = floor(random() * 2147483646)::bigint + 1,
-        phase_deadline = clock_timestamp() + interval '60 seconds',
-        total_deadline = clock_timestamp() + interval '5 minutes',
+    set status = 'active', phase = 'shared',
+        puzzle_seed = floor(random() * 2147483646)::bigint + 1,
+        puzzle_id = v_puzzle_id,
+        phase_deadline = v_now + interval '60 seconds',
+        total_deadline = v_now + interval '5 minutes',
         active_player = null, round_winner = null, last_reason = null,
-        version = version + 1, updated_at = clock_timestamp()
+        version = version + 1, updated_at = v_now
     where id = p_room_id;
   else
-    update public.elite_pixel_rooms set version = version + 1, updated_at = clock_timestamp() where id = p_room_id;
+    update public.elite_pixel_rooms
+    set version = version + 1, updated_at = v_now
+    where id = p_room_id;
   end if;
 end;
 $$;
@@ -290,8 +371,13 @@ begin
 end;
 $$;
 
-create or replace function public.elite_pixel_resolve_answer(p_room_id uuid, p_correct boolean)
-returns void
+drop function if exists public.elite_pixel_resolve_answer(uuid, boolean);
+
+create or replace function public.elite_pixel_resolve_answer(
+  p_room_id uuid,
+  p_selected_cards smallint[]
+)
+returns boolean
 language plpgsql
 security definer
 set search_path = pg_catalog, public
@@ -300,46 +386,87 @@ declare
   v_seat smallint;
   v_other smallint;
   v_room public.elite_pixel_rooms%rowtype;
+  v_solution smallint[];
+  v_selected smallint[];
+  v_distinct_count integer;
+  v_correct boolean;
   v_scores smallint[];
+  v_now timestamptz := clock_timestamp();
 begin
   v_seat := public.elite_pixel_member_seat(p_room_id);
   v_other := case v_seat when 1 then 2 else 1 end;
-  select * into v_room from public.elite_pixel_rooms where id = p_room_id for update;
+
+  select * into v_room
+  from public.elite_pixel_rooms
+  where id = p_room_id
+  for update;
+
   if v_room.phase not in ('answer', 'exclusive') or v_room.active_player <> v_seat then
     raise exception 'NOT_YOUR_TURN' using errcode = 'P0001';
   end if;
-  if clock_timestamp() >= least(v_room.phase_deadline, v_room.total_deadline) then
+  if v_now >= least(v_room.phase_deadline, v_room.total_deadline) then
     raise exception 'ANSWER_CLOSED' using errcode = 'P0001';
   end if;
+  if p_selected_cards is null or cardinality(p_selected_cards) <> 3 then
+    raise exception 'INVALID_SELECTION' using errcode = 'P0001';
+  end if;
 
-  if p_correct then
+  select array_agg(card order by card), count(distinct card)
+  into v_selected, v_distinct_count
+  from unnest(p_selected_cards) card;
+
+  if v_distinct_count <> 3 or v_selected[1] < 0 or v_selected[3] > 8 then
+    raise exception 'INVALID_SELECTION' using errcode = 'P0001';
+  end if;
+
+  select solution_trio into v_solution
+  from public.elite_pixel_puzzles
+  where id = v_room.puzzle_id;
+
+  if v_solution is null then
+    raise exception 'PUZZLE_NOT_READY' using errcode = 'P0001';
+  end if;
+
+  select array_agg(card order by card)
+  into v_solution
+  from unnest(v_solution) card;
+
+  v_correct := v_selected = v_solution;
+
+  if v_correct then
     v_scores := v_room.scores;
     v_scores[v_seat] := v_scores[v_seat] + 1;
     update public.elite_pixel_rooms
     set scores = v_scores, round_winner = v_seat, active_player = null,
         phase = case when v_scores[v_seat] >= score_limit then 'match_finished' else 'reveal' end,
         status = case when v_scores[v_seat] >= score_limit then 'finished' else 'active' end,
-        last_reason = format('%s gagne la manche avec la bonne combinaison.',
-          (select display_name from public.elite_pixel_room_players where room_id = p_room_id and seat = v_seat)),
+        last_reason = format(
+          '%s gagne la manche avec la bonne combinaison.',
+          (select display_name
+           from public.elite_pixel_room_players
+           where room_id = p_room_id and seat = v_seat)
+        ),
         phase_deadline = null,
-        finished_at = case when v_scores[v_seat] >= score_limit then clock_timestamp() else null end,
-        version = version + 1, updated_at = clock_timestamp()
+        finished_at = case when v_scores[v_seat] >= score_limit then v_now else null end,
+        version = version + 1, updated_at = v_now
     where id = p_room_id;
   elsif v_room.phase = 'answer' then
     update public.elite_pixel_rooms
     set phase = 'exclusive', active_player = v_other,
-        phase_deadline = least(total_deadline, clock_timestamp() + interval '30 seconds'),
+        phase_deadline = least(total_deadline, v_now + interval '30 seconds'),
         last_reason = 'Réponse incorrecte : chance exclusive à l’adversaire.',
-        version = version + 1, updated_at = clock_timestamp()
+        version = version + 1, updated_at = v_now
     where id = p_room_id;
   else
     update public.elite_pixel_rooms
     set phase = 'shared', active_player = null,
-        phase_deadline = least(total_deadline, clock_timestamp() + interval '60 seconds'),
+        phase_deadline = least(total_deadline, v_now + interval '60 seconds'),
         last_reason = 'Réponse incorrecte : le buzzer est de nouveau ouvert.',
-        version = version + 1, updated_at = clock_timestamp()
+        version = version + 1, updated_at = v_now
     where id = p_room_id;
   end if;
+
+  return v_correct;
 end;
 $$;
 
@@ -466,20 +593,39 @@ set search_path = pg_catalog, public
 as $$
 declare
   v_room public.elite_pixel_rooms%rowtype;
+  v_puzzle_id uuid;
+  v_now timestamptz := clock_timestamp();
 begin
   perform public.elite_pixel_member_seat(p_room_id);
-  select * into v_room from public.elite_pixel_rooms where id = p_room_id for update;
-  if v_room.phase not in ('reveal', 'match_finished') then raise exception 'ROUND_NOT_FINISHED' using errcode = 'P0001'; end if;
+  select * into v_room
+  from public.elite_pixel_rooms
+  where id = p_room_id
+  for update;
+
+  if v_room.phase not in ('reveal', 'match_finished') then
+    raise exception 'ROUND_NOT_FINISHED' using errcode = 'P0001';
+  end if;
+
+  select id into v_puzzle_id
+  from public.elite_pixel_puzzles
+  where id <> coalesce(v_room.puzzle_id, '00000000-0000-0000-0000-000000000000'::uuid)
+  order by random()
+  limit 1;
+
+  if v_puzzle_id is null then
+    raise exception 'PUZZLE_BANK_EMPTY' using errcode = 'P0001';
+  end if;
 
   update public.elite_pixel_rooms
   set status = 'active', phase = 'shared', active_player = null,
       round_number = case when v_room.phase = 'match_finished' then 1 else round_number + 1 end,
       scores = case when v_room.phase = 'match_finished' then array[0, 0]::smallint[] else scores end,
       puzzle_seed = floor(random() * 2147483646)::bigint + 1,
-      phase_deadline = clock_timestamp() + interval '60 seconds',
-      total_deadline = clock_timestamp() + interval '5 minutes',
+      puzzle_id = v_puzzle_id,
+      phase_deadline = v_now + interval '60 seconds',
+      total_deadline = v_now + interval '5 minutes',
       round_winner = null, last_reason = null, finished_at = null,
-      version = version + 1, updated_at = clock_timestamp()
+      version = version + 1, updated_at = v_now
   where id = p_room_id;
 end;
 $$;
@@ -535,7 +681,7 @@ revoke all on function public.elite_pixel_join_room(text, text) from public, ano
 revoke all on function public.elite_pixel_get_state(uuid) from public, anon, authenticated;
 revoke all on function public.elite_pixel_set_ready(uuid, boolean) from public, anon, authenticated;
 revoke all on function public.elite_pixel_buzz(uuid) from public, anon, authenticated;
-revoke all on function public.elite_pixel_resolve_answer(uuid, boolean) from public, anon, authenticated;
+revoke all on function public.elite_pixel_resolve_answer(uuid, smallint[]) from public, anon, authenticated;
 revoke all on function public.elite_pixel_sync_clock(uuid) from public, anon, authenticated;
 revoke all on function public.elite_pixel_sync_state(uuid) from public, anon, authenticated;
 revoke all on function public.elite_pixel_next_round(uuid) from public, anon, authenticated;
@@ -548,7 +694,7 @@ grant execute on function public.elite_pixel_join_room(text, text) to authentica
 grant execute on function public.elite_pixel_get_state(uuid) to authenticated;
 grant execute on function public.elite_pixel_set_ready(uuid, boolean) to authenticated;
 grant execute on function public.elite_pixel_buzz(uuid) to authenticated;
-grant execute on function public.elite_pixel_resolve_answer(uuid, boolean) to authenticated;
+grant execute on function public.elite_pixel_resolve_answer(uuid, smallint[]) to authenticated;
 grant execute on function public.elite_pixel_sync_clock(uuid) to authenticated;
 grant execute on function public.elite_pixel_sync_state(uuid) to authenticated;
 grant execute on function public.elite_pixel_next_round(uuid) to authenticated;
