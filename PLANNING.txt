@@ -9,7 +9,8 @@ P2 — Confirmation avant de quitter une partie active — TERMINÉ
      « Quitter le salon » demande confirmation quand le départ donnerait la
      victoire à l'adversaire. En phase exclusive online, le côté du joueur
      actif est entouré en vert citron sur PC ; le bouton reste signalé sur
-     smartphone. En local PC, un repère J1/J2 encadre le bouton de validation.
+     smartphone. En local PC, un repère J1/J2 encadre le bouton de validation :
+     il suit le joueur qui a buzzé, puis bascule vers l'adversaire en exclusif.
 
 P3 — Reconnexion avec délai de grâce — À FAIRE
      Laisser au joueur un court délai pour revenir après une coupure réseau
