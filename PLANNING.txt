@@ -7,8 +7,9 @@ P1 — Tests du moteur et des phases — TERMINÉ
 
 P2 — Confirmation avant de quitter une partie active — TERMINÉ
      « Quitter le salon » demande confirmation quand le départ donnerait la
-     victoire à l'adversaire. En phase exclusive, le côté du joueur actif est
-     entouré en vert citron sur PC ; le bouton reste signalé sur smartphone.
+     victoire à l'adversaire. En phase exclusive online, le côté du joueur
+     actif est entouré en vert citron sur PC ; le bouton reste signalé sur
+     smartphone. En local PC, un repère J1/J2 encadre le bouton de validation.
 
 P3 — Reconnexion avec délai de grâce — À FAIRE
      Laisser au joueur un court délai pour revenir après une coupure réseau
