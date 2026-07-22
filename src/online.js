@@ -18,6 +18,11 @@ const PHASE = Object.freeze({
   FINISHED: 'match_finished',
 });
 
+const PRESENCE = Object.freeze({
+  OFFLINE_AFTER_MS: 8_000,
+  RECONNECT_GRACE_MS: 30_000,
+});
+
 const CELL_CLASS = {
   [CELL.EMPTY]: 'empty',
   [CELL.RED]: 'red',
@@ -60,6 +65,7 @@ let connected = false;
 let wakeLock = null;
 let finishedDialogDismissed = false;
 let renderedSolutionKey = null;
+let presenceWarningActive = false;
 
 function onlineGameInProgress() {
   return Boolean(state && state.room.phase !== PHASE.WAITING && state.room.phase !== PHASE.FINISHED);
@@ -224,6 +230,40 @@ function playerName(seat) {
   return getPlayer(seat)?.display_name ?? `Joueur ${seat}`;
 }
 
+function opponentReconnectStatus() {
+  if (!state || state.room.status !== 'active') return null;
+  const opponentSeat = state.seat === 1 ? 2 : 1;
+  const opponent = getPlayer(opponentSeat);
+  if (!opponent?.last_seen) return null;
+
+  const ageMs = Math.max(
+    0,
+    Date.now() + serverOffset - new Date(opponent.last_seen).getTime(),
+  );
+  if (ageMs < PRESENCE.OFFLINE_AFTER_MS) return null;
+
+  return {
+    name: opponent.display_name,
+    remainingMs: Math.max(0, PRESENCE.RECONNECT_GRACE_MS - ageMs),
+  };
+}
+
+function renderPresenceWarning() {
+  const reconnect = opponentReconnectStatus();
+  if (!reconnect) {
+    if (presenceWarningActive) {
+      presenceWarningActive = false;
+      setPhaseCopy();
+    }
+    return;
+  }
+
+  presenceWarningActive = true;
+  el['phase-label'].textContent = 'Adversaire déconnecté';
+  el['status-message'].classList.add('presence-warning');
+  el['status-message'].textContent = `Reconnexion de ${reconnect.name} : ${formatDuration(reconnect.remainingMs)} avant victoire par forfait.`;
+}
+
 function createPuzzle(seed) {
   const numericSeed = Number(seed);
   if (!Number.isFinite(numericSeed) || numericSeed === puzzleSeed) return;
@@ -237,6 +277,7 @@ function createPuzzle(seed) {
 
 function setPhaseCopy() {
   const room = state.room;
+  el['status-message'].classList.remove('presence-warning');
   el['buzz-button'].disabled = room.phase !== PHASE.SHARED || !connected;
   el['mobile-online-buzzer'].disabled = room.phase !== PHASE.SHARED || !connected;
   const ownTurn = room.active_player === state.seat;
@@ -404,6 +445,7 @@ function tick() {
   if (!state || state.room.phase === PHASE.WAITING) return;
   el['phase-timer'].textContent = formatDuration(remaining(state.room.phase_deadline));
   el['total-timer'].textContent = formatDuration(remaining(state.room.total_deadline));
+  renderPresenceWarning();
 }
 
 async function refreshState({ syncClock = true } = {}) {
@@ -459,6 +501,7 @@ function clearRoom() {
   selectedCards = [];
   lastRenderVersion = null;
   finishedDialogDismissed = false;
+  presenceWarningActive = false;
   void releaseWakeLock();
   localStorage.removeItem('elite-pixel-room-id');
   clearInterval(pollTimer);
