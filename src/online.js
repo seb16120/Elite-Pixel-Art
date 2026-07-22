@@ -1,9 +1,6 @@
 import {
   CELL,
-  createSeededRandom,
-  generatePuzzle,
   rotateCard,
-  sameTrio,
 } from './engine.js';
 
 const { url, publishableKey } = window.ELITE_PIXEL_SUPABASE ?? {};
@@ -122,6 +119,8 @@ function formatError(error) {
     NOT_YOUR_TURN: 'Ce n’est pas votre temps de réponse.',
     BUZZ_CLOSED: 'Le buzzer est déjà fermé.',
     PLAYER_NOT_READY: 'Les deux joueurs doivent être prêts.',
+    INVALID_SELECTION: 'Sélection invalide.',
+    PUZZLE_NOT_READY: 'L’énigme serveur n’est pas prête.',
   };
   return Object.entries(known).find(([code]) => message.includes(code))?.[1] ?? message;
 }
@@ -270,11 +269,17 @@ function renderPresenceWarning() {
   el['status-message'].textContent = `Reconnexion de ${reconnect.name} : ${formatDuration(reconnect.remainingMs)} avant victoire par forfait.`;
 }
 
-function createPuzzle(seed) {
-  const numericSeed = Number(seed);
-  if (!Number.isFinite(numericSeed) || numericSeed === puzzleSeed) return;
-  puzzleSeed = numericSeed;
-  puzzle = generatePuzzle({ random: createSeededRandom(numericSeed) });
+function createPuzzle(nextPuzzle) {
+  if (!nextPuzzle?.id || !Array.isArray(nextPuzzle.cards) || !Array.isArray(nextPuzzle.model)) return;
+  const nextKey = `${nextPuzzle.id}:${nextPuzzle.solution ? 'revealed' : 'hidden'}`;
+  if (nextKey === puzzleSeed) return;
+
+  puzzleSeed = nextKey;
+  puzzle = {
+    cards: nextPuzzle.cards,
+    model: nextPuzzle.model,
+    solution: nextPuzzle.solution,
+  };
   selectedCards = [];
   buildGrid(el['model-grid'], puzzle.model);
   renderCards();
@@ -306,7 +311,7 @@ function setPhaseCopy() {
 
 function renderSolutionEquation() {
   el['solution-equation'].replaceChildren();
-  if (!puzzle) return;
+  if (!puzzle?.solution) return;
   puzzle.solution.trio.forEach((cardIndex, index) => {
     const card = document.createElement('div');
     card.className = 'solution-card-wrap';
@@ -422,7 +427,7 @@ function renderGame() {
   el['player-one-name'].textContent = playerName(1);
   el['player-two-name'].textContent = playerName(2);
   el['round-number'].textContent = `Manche ${state.room.round_number}`;
-  createPuzzle(state.room.puzzle_seed);
+  createPuzzle(state.puzzle);
   renderScores();
   setPhaseCopy();
   renderCards();
@@ -515,8 +520,16 @@ async function refreshState({ syncClock = true } = {}) {
 
 function applyRealtimeRoom(payload) {
   if (!state || payload.eventType === 'DELETE' || !payload.new?.id) return;
+  const puzzleChanged = payload.new.puzzle_id !== state.room.puzzle_id;
+  const solutionRevealed = [PHASE.REVEAL, PHASE.FINISHED].includes(payload.new.phase)
+    && !state.puzzle?.solution;
+
   state = { ...state, room: payload.new };
-  renderChangedState();
+  if (puzzleChanged || solutionRevealed) {
+    void refreshState({ syncClock: false });
+  } else {
+    renderChangedState();
+  }
   schedulePoll();
 }
 
@@ -651,9 +664,11 @@ async function buzz() {
 async function verifyAnswer() {
   if (!canChooseCards() || selectedCards.length !== 3) return;
   el['verify-button'].disabled = true;
-  const correct = sameTrio(selectedCards, puzzle.solution.trio);
   try {
-    await rpc('elite_pixel_resolve_answer', { p_room_id: roomId, p_correct: correct });
+    await rpc('elite_pixel_resolve_answer', {
+      p_room_id: roomId,
+      p_selected_cards: selectedCards,
+    });
     selectedCards = [];
     await refreshState({ syncClock: false });
   } catch (error) {
