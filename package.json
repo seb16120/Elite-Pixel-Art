@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "generate:puzzle-bank": "node scripts/generate-puzzle-bank.mjs"
   }
 }
