@@ -24,7 +24,8 @@ Supabase synchronise et arbitre :
 - le premier buzzer reçu ;
 - les phases et les chronomètres ;
 - les manches et le score du FT3 ;
-- une fenêtre de reconnexion de 30 secondes avant toute victoire par forfait.
+- une fenêtre de reconnexion de 30 secondes avant toute victoire par forfait ;
+- une synchronisation adaptative regroupée, complétée par les événements Realtime.
 
 Une superposition `X + X + Y` est invalide : une couleur majoritaire ne remplace plus la troisième couleur. Après un buzz, le joueur dispose de 15 secondes pour choisir ses cartes ; une erreur accorde 30 secondes exclusives à l'adversaire.
 
