@@ -193,6 +193,14 @@ function renderPlayers() {
     button.disabled = state.phase !== PHASE.SHARED;
     button.classList.toggle('active', state.currentPlayer === player && isSelectionPhase());
   });
+
+  document.querySelectorAll('[data-exclusive-side]').forEach((indicator) => {
+    const player = Number(indicator.dataset.exclusiveSide);
+    indicator.classList.toggle(
+      'active',
+      state.phase === PHASE.EXCLUSIVE && state.currentPlayer === player,
+    );
+  });
 }
 
 function usesTouchBuzzers() {
