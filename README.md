@@ -29,7 +29,7 @@ Supabase synchronise et arbitre :
 
 Une superposition `X + X + Y` est invalide : une couleur majoritaire ne remplace plus la troisième couleur. Après un buzz, le joueur dispose de 15 secondes pour choisir ses cartes ; une erreur accorde 30 secondes exclusives à l'adversaire.
 
-Cette première version est volontairement amicale. La sélection gagnante est vérifiée dans le navigateur puis déclarée au serveur. Avant d'ajouter un classement ou de l'Elo, la validation complète de la solution devra être déplacée côté serveur afin d'empêcher un navigateur modifié de déclarer une fausse victoire.
+Cette première version reste volontairement amicale, mais les réponses sont désormais arbitrées par Supabase. Le navigateur reçoit les cartes et le modèle sans la solution, envoie les trois cartes choisies, puis le serveur compare lui-même la sélection à une énigme privée vérifiée. La solution et ses rotations ne sont révélées qu’après la manche.
 
 ## Structure
 
@@ -40,7 +40,7 @@ Cette première version est volontairement amicale. La sélection gagnante est v
 - `supabase/elite-pixel-online.sql` : schéma, règles de sécurité et fonctions du mode online ;
 - `favicon.svg` : modèle pixelisé à atteindre.
 
-Les objets Supabase utilisent exclusivement le préfixe `elite_pixel_` pour rester séparés des autres jeux hébergés dans le même projet.
+Les objets Supabase utilisent exclusivement le préfixe `elite_pixel_` pour rester séparés des autres jeux hébergés dans le même projet. La banque déployée contient 128 énigmes ; leurs identifiants et solutions ne sont pas enregistrés dans le dépôt public. Pour préparer une nouvelle banque privée, exécutez `npm run generate:puzzle-bank -- 128`, puis appliquez le SQL produit dans Supabase.
 
 ## Lancer en local
 
