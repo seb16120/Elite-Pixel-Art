@@ -149,6 +149,18 @@ h2 {
   box-shadow: 0 0 24px rgba(138, 247, 211, 0.14);
 }
 
+@media (min-width: 621px) {
+  .scoreboard.exclusive-seat-1 .player-one,
+  .scoreboard.exclusive-seat-2 .player-two {
+    outline: 3px solid #b8ff5a;
+    outline-offset: 2px;
+    border-color: #b8ff5a;
+    box-shadow:
+      0 0 0 1px rgba(184, 255, 90, 0.35),
+      0 0 24px rgba(184, 255, 90, 0.28);
+  }
+}
+
 .player-panel strong {
   display: block;
   font-size: 1.08rem;
