@@ -64,3 +64,20 @@ test('les fonctions RPC ne sont pas exécutables par anon', () => {
     );
   }
 });
+
+
+test('une déconnexion laisse 30 secondes avant la victoire par forfait', () => {
+  assert.match(compactSql, /v_other_last_seen < v_now - interval '30 seconds'/);
+  assert.match(compactSql, /v_scores\[v_seat\] := v_room\.score_limit/);
+  assert.match(compactSql, /status = 'finished', phase = 'match_finished'/);
+  assert.match(compactSql, /ne s’est pas reconnecté dans les 30 secondes/);
+});
+
+test('une reprise tardive ne peut pas réclamer immédiatement la victoire', () => {
+  assert.match(compactSql, /v_self_last_seen >= v_now - interval '10 seconds'/);
+  assert.match(compactSql, /presence_started_at timestamptz not null default now\(\)/);
+  assert.match(compactSql, /presence_started_at = case[\s\S]*interval '8 seconds'/);
+  assert.match(compactSql, /v_self_presence_started_at <= v_now - interval '10 seconds'/);
+
+  assert.match(compactSql, /last_seen = v_now[\s\S]*interval '4 seconds'/);
+});
