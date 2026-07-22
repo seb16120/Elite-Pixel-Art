@@ -5,9 +5,10 @@ P1 — Tests du moteur et des phases — TERMINÉ
      Tester les rotations, les fusions de couleurs, l'invalidité de X + X + Y,
      l'unicité des énigmes et les transitions principales du mode online.
 
-P2 — Confirmation avant de quitter une partie active — À FAIRE
-     « Quitter le salon » devra demander confirmation pendant une partie,
-     car le départ donne la victoire à l'adversaire.
+P2 — Confirmation avant de quitter une partie active — TERMINÉ
+     « Quitter le salon » demande confirmation quand le départ donnerait la
+     victoire à l'adversaire. En phase exclusive, le côté du joueur actif est
+     entouré en vert citron sur PC ; le bouton reste signalé sur smartphone.
 
 P3 — Reconnexion avec délai de grâce — À FAIRE
      Laisser au joueur un court délai pour revenir après une coupure réseau
