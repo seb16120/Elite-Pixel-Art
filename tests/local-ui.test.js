@@ -6,12 +6,17 @@ const localHtml = await readFile(new URL('../local.html', import.meta.url), 'utf
 const localScript = await readFile(new URL('../src/app.js', import.meta.url), 'utf8');
 const styles = await readFile(new URL('../styles.css', import.meta.url), 'utf8');
 
-test('la phase exclusive locale signale uniquement le joueur concerné', () => {
+test('le voyant local suit le joueur qui possède la main', () => {
   assert.match(localHtml, /data-exclusive-side="1"/);
   assert.match(localHtml, /data-exclusive-side="2"/);
-  assert.match(localScript, /state\.phase === PHASE\.EXCLUSIVE && state\.currentPlayer === player/);
+  assert.match(localScript, /isSelectionPhase\(\) && state\.currentPlayer === player/);
   assert.match(styles, /\.local-exclusive-side\.active/);
   assert.match(styles, /border-color: #b8ff5a/);
+});
+
+test('la phase de réponse puis la riposte exclusive changent bien de joueur', () => {
+  assert.match(localScript, /function startAnswer\(player\)[\s\S]*state\.currentPlayer = player/);
+  assert.match(localScript, /startExclusive\(player === 1 \? 2 : 1\)/);
 });
 
 test('les repères J1 et J2 encadrent le bouton de validation sur PC', () => {
