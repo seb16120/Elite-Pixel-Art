@@ -34,11 +34,14 @@ P6 — Choix du format FT1 / FT2 / FT3 — TERMINÉ
      choisit le format du salon et l’adversaire rejoint automatiquement ce format.
      FT5 reste volontairement exclu.
 
-P7 — Profils, statistiques et Elo — PLUS TARD
-     Ajouter les comptes Brain Games, les statistiques propres au jeu et le
-     classement seulement après la validation serveur des parties.
+P7 — Interaction entre EPA et Brain Games Website — À FAIRE DANS BGW-P4
+     Transmettre à Brain Games Website les résultats online validés par Supabase
+     selon le contrat commun versionné. EPA conserve ses règles et la validation
+     officielle des parties ; les profils, statistiques, graphiques, classements
+     et calculs d’Elo restent la responsabilité de Brain Games Website.
 
 Décisions conservées :
 - Les animations répétées de la solution sont volontaires.
 - Le bouton actuel est « Quitter le salon » ; il n'existe pas de bouton Abandon.
-- La bêta online reste amicale et non classée jusqu'au P5.
+- La bêta online reste amicale et non classée jusqu’à l’activation du classement
+  par Brain Games Website.
