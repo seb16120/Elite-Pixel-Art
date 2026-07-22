@@ -12,9 +12,10 @@ P2 — Confirmation avant de quitter une partie active — TERMINÉ
      smartphone. En local PC, un repère J1/J2 encadre le bouton de validation :
      il suit le joueur qui a buzzé, puis bascule vers l'adversaire en exclusif.
 
-P3 — Reconnexion avec délai de grâce — À FAIRE
-     Laisser au joueur un court délai pour revenir après une coupure réseau
-     avant de comptabiliser son départ comme une défaite.
+P3 — Reconnexion avec délai de grâce — TERMINÉ
+     Une coupure détectée ouvre 30 secondes de reconnexion, affichées à l'écran.
+     Passé ce délai, le joueur resté présent gagne le match. Une reprise après
+     une coupure simultanée ne déclenche pas de victoire immédiate injuste.
 
 P4 — Réduction des appels Supabase — À FAIRE
      Diminuer les lectures et écritures inutiles tout en conservant une
