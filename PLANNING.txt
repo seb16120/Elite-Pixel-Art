@@ -1,0 +1,34 @@
+ELITE PIXEL ART — PLANNING
+Dernière mise à jour : 22 juillet 2026
+
+P1 — Tests du moteur et des phases — TERMINÉ
+     Tester les rotations, les fusions de couleurs, l'invalidité de X + X + Y,
+     l'unicité des énigmes et les transitions principales du mode online.
+
+P2 — Confirmation avant de quitter une partie active — À FAIRE
+     « Quitter le salon » devra demander confirmation pendant une partie,
+     car le départ donne la victoire à l'adversaire.
+
+P3 — Reconnexion avec délai de grâce — À FAIRE
+     Laisser au joueur un court délai pour revenir après une coupure réseau
+     avant de comptabiliser son départ comme une défaite.
+
+P4 — Réduction des appels Supabase — À FAIRE
+     Diminuer les lectures et écritures inutiles tout en conservant une
+     synchronisation réactive entre les deux joueurs.
+
+P5 — Validation des réponses côté serveur — À FAIRE
+     Recalculer la solution dans Supabase afin qu'un navigateur modifié ne
+     puisse pas déclarer une fausse victoire. Requis avant le classement.
+
+P6 — Choix du format FT1 / FT2 / FT3 — À FAIRE
+     Proposer uniquement FT1, FT2 et FT3. FT5 est volontairement exclu.
+
+P7 — Profils, statistiques et Elo — PLUS TARD
+     Ajouter les comptes Brain Games, les statistiques propres au jeu et le
+     classement seulement après la validation serveur des parties.
+
+Décisions conservées :
+- Les animations répétées de la solution sont volontaires.
+- Le bouton actuel est « Quitter le salon » ; il n'existe pas de bouton Abandon.
+- La bêta online reste amicale et non classée jusqu'au P5.
