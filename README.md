@@ -46,3 +46,14 @@ Le projet ne nécessite ni compilation ni dépendance locale. Servez simplement 
 
 La version publiée est disponible sur [GitHub Pages](https://seb16120.github.io/Elite-Pixel-Art/).
 
+## Tests automatiques
+
+Avec Node.js installé, lancez simplement :
+
+```powershell
+npm test
+```
+
+La suite ne demande aucune bibliothèque supplémentaire. Elle vérifie le moteur
+(rotations, fusions, règle `X + X + Y` et unicité des énigmes) ainsi que les
+contrats essentiels des phases online définies dans le fichier SQL Supabase.
