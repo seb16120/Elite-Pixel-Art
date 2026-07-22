@@ -53,3 +53,13 @@ test('le joueur qui possède l’exclusivité est signalé sur le score PC', () 
   assert.match(styles, /scoreboard\.exclusive-seat-2 \.player-two/);
   assert.match(styles, /outline: 3px solid #b8ff5a/);
 });
+
+
+test('le client affiche le délai de reconnexion de 30 secondes', () => {
+  assert.match(onlineScript, /RECONNECT_GRACE_MS: 30_000/);
+  assert.match(onlineScript, /OFFLINE_AFTER_MS: 8_000/);
+  assert.match(onlineScript, /function opponentReconnectStatus\(\)/);
+  assert.match(onlineScript, /Adversaire déconnecté/);
+  assert.match(onlineScript, /avant victoire par forfait/);
+  assert.match(styles, /\.status-message\.presence-warning/);
+});
