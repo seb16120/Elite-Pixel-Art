@@ -81,3 +81,9 @@ test('une reprise tardive ne peut pas réclamer immédiatement la victoire', () 
 
   assert.match(compactSql, /last_seen = v_now[\s\S]*interval '4 seconds'/);
 });
+
+test('P4 regroupe la synchronisation de l’horloge et la lecture de l’état', () => {
+  assert.match(compactSql, /function public\.elite_pixel_sync_state\(p_room_id uuid\)[\s\S]*perform public\.elite_pixel_sync_clock\(p_room_id\)[\s\S]*return public\.elite_pixel_get_state\(p_room_id\)/);
+  assert.match(compactSql, /revoke all on function public\.elite_pixel_sync_state\(uuid\) from public, anon, authenticated/);
+  assert.match(compactSql, /grant execute on function public\.elite_pixel_sync_state\(uuid\) to authenticated/);
+});
