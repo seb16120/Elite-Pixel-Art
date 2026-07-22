@@ -446,6 +446,18 @@ begin
 end;
 $$;
 
+create or replace function public.elite_pixel_sync_state(p_room_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+begin
+  perform public.elite_pixel_sync_clock(p_room_id);
+  return public.elite_pixel_get_state(p_room_id);
+end;
+$$;
+
 create or replace function public.elite_pixel_next_round(p_room_id uuid)
 returns void
 language plpgsql
@@ -525,6 +537,7 @@ revoke all on function public.elite_pixel_set_ready(uuid, boolean) from public, 
 revoke all on function public.elite_pixel_buzz(uuid) from public, anon, authenticated;
 revoke all on function public.elite_pixel_resolve_answer(uuid, boolean) from public, anon, authenticated;
 revoke all on function public.elite_pixel_sync_clock(uuid) from public, anon, authenticated;
+revoke all on function public.elite_pixel_sync_state(uuid) from public, anon, authenticated;
 revoke all on function public.elite_pixel_next_round(uuid) from public, anon, authenticated;
 revoke all on function public.elite_pixel_leave_room(uuid) from public, anon, authenticated;
 
@@ -537,6 +550,7 @@ grant execute on function public.elite_pixel_set_ready(uuid, boolean) to authent
 grant execute on function public.elite_pixel_buzz(uuid) to authenticated;
 grant execute on function public.elite_pixel_resolve_answer(uuid, boolean) to authenticated;
 grant execute on function public.elite_pixel_sync_clock(uuid) to authenticated;
+grant execute on function public.elite_pixel_sync_state(uuid) to authenticated;
 grant execute on function public.elite_pixel_next_round(uuid) to authenticated;
 grant execute on function public.elite_pixel_leave_room(uuid) to authenticated;
 
