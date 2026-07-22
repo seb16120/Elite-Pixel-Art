@@ -73,3 +73,10 @@ test('la synchronisation P4 utilise un seul appel groupé et un rythme adaptatif
   assert.match(onlineScript, /function applyRealtimePlayer\(payload\)/);
   assert.doesNotMatch(onlineScript, /setInterval\(\(\) => refreshState\(\), 1200\)/);
 });
+
+test('P5 envoie les cartes choisies sans déclarer le résultat', () => {
+  assert.match(onlineScript, /p_selected_cards: selectedCards/);
+  assert.doesNotMatch(onlineScript, /p_correct:/);
+  assert.doesNotMatch(onlineScript, /sameTrio\(selectedCards/);
+  assert.match(onlineScript, /createPuzzle\(state\.puzzle\)/);
+});
