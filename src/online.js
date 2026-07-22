@@ -23,6 +23,12 @@ const PRESENCE = Object.freeze({
   RECONNECT_GRACE_MS: 30_000,
 });
 
+const SYNC = Object.freeze({
+  ACTIVE_POLL_MS: 5_000,
+  WAITING_POLL_MS: 15_000,
+  FINISHED_POLL_MS: 30_000,
+});
+
 const CELL_CLASS = {
   [CELL.EMPTY]: 'empty',
   [CELL.RED]: 'red',
@@ -424,6 +430,23 @@ function renderGame() {
   renderDialog();
 }
 
+function stateSignature(next = state) {
+  if (!next) return '';
+  const players = next.players
+    .map((player) => `${player.seat}-${player.display_name}-${player.ready}`)
+    .join('|');
+  return `${next.room.version}:${players}`;
+}
+
+function renderChangedState() {
+  const signature = stateSignature();
+  if (signature !== lastRenderVersion) {
+    lastRenderVersion = signature;
+    render();
+  }
+  tick();
+}
+
 function render() {
   if (!state) return;
   if (state.room.phase === PHASE.WAITING) renderWaiting();
@@ -448,23 +471,35 @@ function tick() {
   renderPresenceWarning();
 }
 
+function pollDelay() {
+  if (!state || state.room.phase === PHASE.WAITING) return SYNC.WAITING_POLL_MS;
+  if (state.room.phase === PHASE.FINISHED) return SYNC.FINISHED_POLL_MS;
+  return SYNC.ACTIVE_POLL_MS;
+}
+
+function schedulePoll(delay = pollDelay()) {
+  clearTimeout(pollTimer);
+  if (!roomId) return;
+  pollTimer = setTimeout(async () => {
+    await refreshState();
+    schedulePoll();
+  }, delay);
+}
+
 async function refreshState({ syncClock = true } = {}) {
   if (!roomId) return;
   if (refreshInFlight) return refreshInFlight;
   refreshInFlight = (async () => {
     try {
-      if (syncClock) await rpc('elite_pixel_sync_clock', { p_room_id: roomId });
-      const next = await rpc('elite_pixel_get_state', { p_room_id: roomId });
+      const next = await rpc(
+        syncClock ? 'elite_pixel_sync_state' : 'elite_pixel_get_state',
+        { p_room_id: roomId },
+      );
       if (!next?.room) throw new Error('ROOM_NOT_FOUND');
       state = next;
       serverOffset = new Date(next.server_now).getTime() - Date.now();
       setConnection(true);
-      const signature = `${next.room.version}:${next.players.map((p) => `${p.seat}-${p.ready}-${p.last_seen}`).join('|')}`;
-      if (signature !== lastRenderVersion) {
-        lastRenderVersion = signature;
-        render();
-      }
-      tick();
+      renderChangedState();
     } catch (error) {
       setConnection(false);
       if (error?.message?.includes('NOT_MEMBER') || error?.message?.includes('ROOM_NOT_FOUND')) {
@@ -478,14 +513,44 @@ async function refreshState({ syncClock = true } = {}) {
   return refreshInFlight;
 }
 
+function applyRealtimeRoom(payload) {
+  if (!state || payload.eventType === 'DELETE' || !payload.new?.id) return;
+  state = { ...state, room: payload.new };
+  renderChangedState();
+  schedulePoll();
+}
+
+function applyRealtimePlayer(payload) {
+  if (!state) return;
+  const changed = payload.eventType === 'DELETE' ? payload.old : payload.new;
+  if (!changed?.seat) return;
+
+  const players = state.players.filter((player) => player.seat !== changed.seat);
+  if (payload.eventType !== 'DELETE') players.push(changed);
+  players.sort((left, right) => left.seat - right.seat);
+  state = { ...state, players };
+  renderChangedState();
+}
+
 async function subscribeToRoom() {
   if (channel) await client.removeChannel(channel);
   channel = client.channel(`elite-pixel-${roomId}`)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'elite_pixel_rooms', filter: `id=eq.${roomId}` }, () => refreshState())
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'elite_pixel_room_players', filter: `room_id=eq.${roomId}` }, () => refreshState({ syncClock: false }))
-    .subscribe((status) => setConnection(status === 'SUBSCRIBED', status === 'SUBSCRIBED' ? 'Synchronisé' : 'Reconnexion…'));
-  clearInterval(pollTimer);
-  pollTimer = setInterval(() => refreshState(), 1200);
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'elite_pixel_rooms', filter: `id=eq.${roomId}` },
+      applyRealtimeRoom,
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'elite_pixel_room_players', filter: `room_id=eq.${roomId}` },
+      applyRealtimePlayer,
+    )
+    .subscribe((status) => {
+      const subscribed = status === 'SUBSCRIBED';
+      setConnection(subscribed, subscribed ? 'Synchronisé' : 'Reconnexion…');
+      if (subscribed && state) void refreshState();
+    });
+  schedulePoll(0);
 }
 
 function saveRoom(id) {
@@ -504,7 +569,7 @@ function clearRoom() {
   presenceWarningActive = false;
   void releaseWakeLock();
   localStorage.removeItem('elite-pixel-room-id');
-  clearInterval(pollTimer);
+  clearTimeout(pollTimer);
   pollTimer = null;
   if (channel) client.removeChannel(channel);
   channel = null;
@@ -681,8 +746,19 @@ function bindEvents() {
   el['rules-button'].addEventListener('click', () => el['rules-dialog'].showModal());
   el['close-rules-button'].addEventListener('click', () => el['rules-dialog'].close());
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') syncWakeLock();
+    if (document.visibilityState !== 'visible') return;
+    syncWakeLock();
+    if (roomId) {
+      void refreshState();
+      schedulePoll();
+    }
   });
+  window.addEventListener('online', () => {
+    if (!roomId) return;
+    void refreshState();
+    schedulePoll();
+  });
+  window.addEventListener('offline', () => setConnection(false));
   document.addEventListener('pointerdown', syncWakeLock);
   document.addEventListener('keydown', (event) => {
     if (!['Space', 'Enter'].includes(event.code) || event.repeat) return;
