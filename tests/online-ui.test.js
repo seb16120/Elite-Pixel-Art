@@ -63,3 +63,13 @@ test('le client affiche le délai de reconnexion de 30 secondes', () => {
   assert.match(onlineScript, /avant victoire par forfait/);
   assert.match(styles, /\.status-message\.presence-warning/);
 });
+
+test('la synchronisation P4 utilise un seul appel groupé et un rythme adaptatif', () => {
+  assert.match(onlineScript, /ACTIVE_POLL_MS: 5_000/);
+  assert.match(onlineScript, /WAITING_POLL_MS: 15_000/);
+  assert.match(onlineScript, /FINISHED_POLL_MS: 30_000/);
+  assert.match(onlineScript, /syncClock \? 'elite_pixel_sync_state' : 'elite_pixel_get_state'/);
+  assert.match(onlineScript, /function applyRealtimeRoom\(payload\)/);
+  assert.match(onlineScript, /function applyRealtimePlayer\(payload\)/);
+  assert.doesNotMatch(onlineScript, /setInterval\(\(\) => refreshState\(\), 1200\)/);
+});
