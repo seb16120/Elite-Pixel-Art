@@ -30,9 +30,13 @@ create table if not exists public.elite_pixel_room_players (
   ready boolean not null default false,
   joined_at timestamptz not null default now(),
   last_seen timestamptz not null default now(),
+  presence_started_at timestamptz not null default now(),
   primary key (room_id, seat),
   unique (room_id, user_id)
 );
+
+alter table public.elite_pixel_room_players
+  add column if not exists presence_started_at timestamptz not null default now();
 
 create index if not exists elite_pixel_room_players_user_idx
   on public.elite_pixel_room_players (user_id, room_id);
@@ -191,12 +195,19 @@ as $$
 declare
   v_seat smallint;
   v_result jsonb;
+  v_now timestamptz := clock_timestamp();
 begin
   v_seat := public.elite_pixel_member_seat(p_room_id);
+
   update public.elite_pixel_room_players
-  set last_seen = clock_timestamp()
-  where room_id = p_room_id and user_id = auth.uid()
-    and last_seen < clock_timestamp() - interval '4 seconds';
+  set presence_started_at = case
+        when last_seen < v_now - interval '8 seconds' then v_now
+        else presence_started_at
+      end,
+      last_seen = v_now
+  where room_id = p_room_id
+    and user_id = auth.uid()
+    and last_seen < v_now - interval '4 seconds';
 
   select jsonb_build_object(
     'room', to_jsonb(r),
@@ -208,15 +219,19 @@ begin
         'joined_at', p.joined_at,
         'last_seen', p.last_seen
       ) order by p.seat)
-      from public.elite_pixel_room_players p where p.room_id = r.id
+      from public.elite_pixel_room_players p
+      where p.room_id = r.id
     ), '[]'::jsonb),
     'seat', v_seat,
-    'server_now', clock_timestamp()
+    'server_now', v_now
   ) into v_result
   from public.elite_pixel_rooms r
   where r.id = p_room_id;
 
-  if v_result is null then raise exception 'ROOM_NOT_FOUND' using errcode = 'P0001'; end if;
+  if v_result is null then
+    raise exception 'ROOM_NOT_FOUND' using errcode = 'P0001';
+  end if;
+
   return v_result;
 end;
 $$;
@@ -336,39 +351,95 @@ set search_path = pg_catalog, public
 as $$
 declare
   v_room public.elite_pixel_rooms%rowtype;
+  v_seat smallint;
   v_other smallint;
+  v_self_last_seen timestamptz;
+  v_self_presence_started_at timestamptz;
+  v_other_last_seen timestamptz;
+  v_scores smallint[];
+  v_now timestamptz := clock_timestamp();
 begin
-  perform public.elite_pixel_member_seat(p_room_id);
-  select * into v_room from public.elite_pixel_rooms where id = p_room_id for update;
-  if v_room.status <> 'active' or v_room.phase in ('waiting', 'reveal', 'match_finished') then return; end if;
+  v_seat := public.elite_pixel_member_seat(p_room_id);
+  v_other := case v_seat when 1 then 2 else 1 end;
 
-  if v_room.total_deadline is not null and clock_timestamp() >= v_room.total_deadline then
+  select * into v_room
+  from public.elite_pixel_rooms
+  where id = p_room_id
+  for update;
+
+  select last_seen, presence_started_at
+  into v_self_last_seen, v_self_presence_started_at
+  from public.elite_pixel_room_players
+  where room_id = p_room_id and seat = v_seat;
+
+  select last_seen into v_other_last_seen
+  from public.elite_pixel_room_players
+  where room_id = p_room_id and seat = v_other;
+
+  update public.elite_pixel_room_players
+  set presence_started_at = case
+        when last_seen < v_now - interval '8 seconds' then v_now
+        else presence_started_at
+      end,
+      last_seen = v_now
+  where room_id = p_room_id
+    and seat = v_seat
+    and last_seen < v_now - interval '4 seconds';
+
+  if v_room.status = 'active'
+     and v_other_last_seen is not null
+     and v_self_last_seen >= v_now - interval '10 seconds'
+     and v_self_presence_started_at <= v_now - interval '10 seconds'
+     and v_other_last_seen < v_now - interval '30 seconds' then
+    v_scores := v_room.scores;
+    v_scores[v_seat] := v_room.score_limit;
+
+    update public.elite_pixel_rooms
+    set status = 'finished', phase = 'match_finished', scores = v_scores,
+        active_player = null, round_winner = v_seat,
+        phase_deadline = null, total_deadline = null,
+        last_reason = format(
+          '%s gagne : son adversaire ne s’est pas reconnecté dans les 30 secondes.',
+          (select display_name
+           from public.elite_pixel_room_players
+           where room_id = p_room_id and seat = v_seat)
+        ),
+        finished_at = v_now, version = version + 1, updated_at = v_now
+    where id = p_room_id;
+    return;
+  end if;
+
+  if v_room.status <> 'active' or v_room.phase in ('waiting', 'reveal', 'match_finished') then
+    return;
+  end if;
+
+  if v_room.total_deadline is not null and v_now >= v_room.total_deadline then
     update public.elite_pixel_rooms
     set phase = 'reveal', active_player = null, round_winner = null,
         phase_deadline = null, last_reason = 'Temps écoulé : aucun point pour cette manche.',
-        version = version + 1, updated_at = clock_timestamp()
+        version = version + 1, updated_at = v_now
     where id = p_room_id;
-  elsif v_room.phase_deadline is not null and clock_timestamp() >= v_room.phase_deadline then
+  elsif v_room.phase_deadline is not null and v_now >= v_room.phase_deadline then
     if v_room.phase = 'answer' then
       v_other := case v_room.active_player when 1 then 2 else 1 end;
       update public.elite_pixel_rooms
       set phase = 'exclusive', active_player = v_other,
-          phase_deadline = least(total_deadline, clock_timestamp() + interval '30 seconds'),
+          phase_deadline = least(total_deadline, v_now + interval '30 seconds'),
           last_reason = 'Temps de réponse écoulé : chance exclusive à l’adversaire.',
-          version = version + 1, updated_at = clock_timestamp()
+          version = version + 1, updated_at = v_now
       where id = p_room_id;
     elsif v_room.phase = 'exclusive' then
       update public.elite_pixel_rooms
       set phase = 'shared', active_player = null,
-          phase_deadline = least(total_deadline, clock_timestamp() + interval '60 seconds'),
+          phase_deadline = least(total_deadline, v_now + interval '60 seconds'),
           last_reason = 'Temps exclusif écoulé : le buzzer est de nouveau ouvert.',
-          version = version + 1, updated_at = clock_timestamp()
+          version = version + 1, updated_at = v_now
       where id = p_room_id;
     else
       update public.elite_pixel_rooms
       set phase = 'reveal', active_player = null, round_winner = null,
           phase_deadline = null, last_reason = 'Personne n’a buzzé : aucun point pour cette manche.',
-          version = version + 1, updated_at = clock_timestamp()
+          version = version + 1, updated_at = v_now
       where id = p_room_id;
     end if;
   end if;
