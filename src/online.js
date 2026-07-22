@@ -35,7 +35,7 @@ const el = Object.fromEntries([
   'waiting-screen', 'waiting-code', 'copy-code-button', 'copy-link-button',
   'players-list', 'ready-button', 'leave-button', 'waiting-notice',
   'game-shell', 'game-leave-button', 'connection-dot', 'connection-label',
-  'game-code', 'player-one-name', 'player-two-name', 'round-number',
+  'game-code', 'scoreboard', 'player-one-name', 'player-two-name', 'round-number',
   'phase-label', 'status-message', 'buzz-button', 'phase-timer-label',
   'mobile-online-buzzer',
   'phase-timer', 'total-timer', 'model-grid', 'cards-grid',
@@ -366,6 +366,11 @@ function renderGame() {
   const waitingForOpponent = [PHASE.ANSWER, PHASE.EXCLUSIVE].includes(state.room.phase)
     && state.room.active_player !== state.seat;
   el['game-shell'].classList.toggle('waiting-turn', waitingForOpponent);
+  const exclusiveSeat = state.room.phase === PHASE.EXCLUSIVE
+    ? state.room.active_player
+    : null;
+  el.scoreboard.classList.toggle('exclusive-seat-1', exclusiveSeat === 1);
+  el.scoreboard.classList.toggle('exclusive-seat-2', exclusiveSeat === 2);
   el['game-code'].textContent = state.room.code;
   el['player-one-name'].textContent = playerName(1);
   el['player-two-name'].textContent = playerName(2);
@@ -564,8 +569,23 @@ async function nextRound() {
   }
 }
 
+function leavingWouldForfeitMatch() {
+  return Boolean(
+    state
+    && state.room.phase !== PHASE.WAITING
+    && state.room.phase !== PHASE.FINISHED
+  );
+}
+
 async function leaveRoom() {
   if (!roomId) return;
+  if (
+    leavingWouldForfeitMatch()
+    && !window.confirm(
+      'Quitter maintenant donnera la victoire à votre adversaire. Voulez-vous vraiment quitter le salon ?',
+    )
+  ) return;
+
   try { await rpc('elite_pixel_leave_room', { p_room_id: roomId }); } catch {}
   clearRoom();
   showLobby();
