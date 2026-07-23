@@ -4,6 +4,10 @@ import {
   rotateCard,
   sameTrio,
 } from './engine.js';
+import {
+  BrainyMatchHistory,
+  createFriendlyLocalMatch,
+} from './brainy-history.js';
 
 const PHASE = Object.freeze({
   SHARED: 'shared',
@@ -47,6 +51,10 @@ const state = {
   scores: { 1: 0, 2: 0 },
   round: 1,
   lastTick: performance.now(),
+  matchId: crypto.randomUUID(),
+  matchStartedAt: new Date().toISOString(),
+  localPlayerIds: { 1: crypto.randomUUID(), 2: crypto.randomUUID() },
+  historyRecorded: false,
 };
 
 const elements = {
@@ -76,12 +84,138 @@ const elements = {
   rulesButton: document.querySelector('#rules-button'),
   rulesDialog: document.querySelector('#rules-dialog'),
   closeRulesButton: document.querySelector('#close-rules-button'),
+  brainyHistoryStatus: document.querySelector('#brainy-history-status'),
+  brainyProfileSeatControl: document.querySelector('#brainy-profile-seat-control'),
+  brainyProfileSeat: document.querySelector('#brainy-profile-seat'),
 };
 
 elements.scoreFormat.textContent = `FT${SCORE_LIMIT}`;
 elements.rulesFormat.textContent = `FT${SCORE_LIMIT}`;
 
 let wakeLock = null;
+let brainyClient = null;
+let brainyHistory = null;
+let brainyProfile = null;
+let brainyReady = null;
+
+function setBrainyHistoryStatus(message, stateClass = '') {
+  elements.brainyHistoryStatus.textContent = message;
+  elements.brainyHistoryStatus.classList.remove(
+    'brainy-history-linked',
+    'brainy-history-pending',
+  );
+  if (stateClass) elements.brainyHistoryStatus.classList.add(stateClass);
+}
+
+async function refreshBrainyProfile(session) {
+  brainyHistory?.stopListening();
+  const user = session?.user;
+  if (!user || user.is_anonymous) {
+    brainyProfile = null;
+    brainyHistory = null;
+    elements.brainyProfileSeatControl.classList.add('hidden');
+    setBrainyHistoryStatus('Historique BGW : connectez votre profil sur le portail');
+    return;
+  }
+
+  const { data: profile, error } = await brainyClient
+    .from('profiles')
+    .select('id, display_name')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (error || !profile) {
+    brainyProfile = null;
+    brainyHistory = null;
+    elements.brainyProfileSeatControl.classList.add('hidden');
+    setBrainyHistoryStatus('Historique BGW : profil non disponible');
+    return;
+  }
+
+  brainyProfile = profile;
+  brainyHistory = new BrainyMatchHistory({
+    supabaseClient: brainyClient,
+    storageKey: `brainy-games-pending-matches-v1:${profile.id}`,
+  });
+  brainyHistory.listenForReconnect();
+  elements.brainyProfileSeatControl.classList.remove('hidden');
+  setBrainyHistoryStatus(
+    `Historique BGW relié à ${profile.display_name}`,
+    'brainy-history-linked',
+  );
+  const sync = await brainyHistory.flush();
+  if (sync.pending.length) {
+    setBrainyHistoryStatus(
+      `${sync.pending.length} partie(s) amicale(s) en attente de synchronisation`,
+      'brainy-history-pending',
+    );
+  }
+}
+
+async function initBrainyHistory() {
+  const { url, publishableKey } = window.ELITE_PIXEL_SUPABASE ?? {};
+  const supabaseFactory = window.supabase?.createClient;
+  if (!url || !publishableKey || !supabaseFactory) {
+    setBrainyHistoryStatus('Historique BGW indisponible');
+    return;
+  }
+
+  brainyClient = supabaseFactory(url, publishableKey, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
+  });
+  const { data: { session } } = await brainyClient.auth.getSession();
+  await refreshBrainyProfile(session);
+  brainyClient.auth.onAuthStateChange((_event, nextSession) => {
+    void refreshBrainyProfile(nextSession);
+  });
+}
+
+function resetLocalMatchIdentity() {
+  state.matchId = crypto.randomUUID();
+  state.matchStartedAt = new Date().toISOString();
+  state.localPlayerIds = { 1: crypto.randomUUID(), 2: crypto.randomUUID() };
+  state.historyRecorded = false;
+}
+
+async function recordFriendlyLocalMatch(winner) {
+  await brainyReady;
+  if (!brainyProfile || !brainyHistory || state.historyRecorded) return;
+  state.historyRecorded = true;
+
+  const profileSeat = Number(elements.brainyProfileSeat.value) === 2 ? 2 : 1;
+  const playerIds = { ...state.localPlayerIds, [profileSeat]: brainyProfile.id };
+  const event = createFriendlyLocalMatch({
+    gameId: 'elite-pixel-art',
+    matchId: `epa-local:${state.matchId}`,
+    startedAt: state.matchStartedAt,
+    format: { type: 'first_to', target_score: SCORE_LIMIT },
+    participants: [1, 2].map((seat) => ({
+      player_id: playerIds[seat],
+      seat,
+      team_id: null,
+      outcome: seat === winner ? 'win' : 'loss',
+      score: state.scores[seat],
+    })),
+    validationReference: 'elite-pixel-art:local-ui:v1',
+  });
+
+  setBrainyHistoryStatus(
+    'Partie amicale en cours de synchronisation…',
+    'brainy-history-pending',
+  );
+  const result = await brainyHistory.queueAndSync(event);
+  if (result.sync.synced.length) {
+    setBrainyHistoryStatus(
+      'Partie amicale enregistrée dans votre historique BGW',
+      'brainy-history-linked',
+    );
+  } else {
+    setBrainyHistoryStatus(
+      'Partie conservée sur cet appareil, synchronisation dès le retour d’Internet',
+      'brainy-history-pending',
+    );
+  }
+}
 
 async function requestWakeLock() {
   if (!('wakeLock' in navigator) || document.visibilityState !== 'visible' || state.phase === PHASE.MATCH_OVER || wakeLock) return;
@@ -396,6 +530,7 @@ function revealRound({ winner = null, reason }) {
     elements.revealKicker.textContent = `Victoire du joueur ${matchWinner}`;
     elements.revealTitle.textContent = 'Partie remportée !';
     elements.nextRoundButton.textContent = `Rejouer un FT${SCORE_LIMIT}`;
+    void recordFriendlyLocalMatch(matchWinner);
     syncWakeLock();
   } else {
     elements.nextRoundButton.textContent = 'Manche suivante';
@@ -453,6 +588,7 @@ function startNextRound() {
   if (state.phase === PHASE.MATCH_OVER) {
     state.scores = { 1: 0, 2: 0 };
     state.round = 1;
+    resetLocalMatchIdentity();
     renderScores();
   } else {
     state.round += 1;
@@ -536,8 +672,15 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') syncWakeLock();
 });
 document.addEventListener('pointerdown', syncWakeLock);
+elements.brainyProfileSeat.value = localStorage.getItem('brainy-epa-profile-seat') === '2' ? '2' : '1';
+elements.brainyProfileSeat.addEventListener('change', () => {
+  localStorage.setItem('brainy-epa-profile-seat', elements.brainyProfileSeat.value);
+});
 
 renderScores();
 createRound();
 syncWakeLock();
+brainyReady = initBrainyHistory().catch(() => {
+  setBrainyHistoryStatus('Historique BGW indisponible');
+});
 requestAnimationFrame(tick);

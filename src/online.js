@@ -40,6 +40,7 @@ const CELL_CLASS = {
 const el = Object.fromEntries([
   'lobby-shell', 'connection-panel', 'connection-status', 'lobby-screen',
   'create-form', 'create-name', 'join-form', 'join-name', 'room-code',
+  'brainy-history-status',
   'waiting-screen', 'waiting-code', 'waiting-format', 'copy-code-button', 'copy-link-button',
   'players-list', 'ready-button', 'leave-button', 'waiting-notice',
   'game-shell', 'game-leave-button', 'connection-dot', 'connection-label',
@@ -69,6 +70,7 @@ let wakeLock = null;
 let finishedDialogDismissed = false;
 let renderedSolutionKey = null;
 let presenceWarningActive = false;
+let brainyProfile = null;
 
 function onlineGameInProgress() {
   return Boolean(state && state.room.phase !== PHASE.WAITING && state.room.phase !== PHASE.FINISHED);
@@ -142,6 +144,42 @@ function setConnection(isConnected, label = isConnected ? 'Synchronisé' : 'Reco
   el['connection-dot'].classList.toggle('online', isConnected);
 }
 
+function setBrainyHistoryStatus(message, linked = false) {
+  el['brainy-history-status'].textContent = message;
+  el['brainy-history-status'].classList.toggle('brainy-history-linked', linked);
+}
+
+async function refreshBrainyProfileStatus(session) {
+  if (!session?.user || session.user.is_anonymous) {
+    brainyProfile = null;
+    setBrainyHistoryStatus(
+      'Sans profil BGW : la partie reste jouable, mais elle ne sera pas ajoutée à un historique personnel.',
+    );
+    return;
+  }
+
+  const { data: profile, error } = await client
+    .from('profiles')
+    .select('id, display_name')
+    .eq('id', session.user.id)
+    .maybeSingle();
+  brainyProfile = error ? null : profile;
+
+  if (!brainyProfile) {
+    setBrainyHistoryStatus(
+      'Compte reconnu, mais profil BGW introuvable : le résultat ne sera pas relié.',
+    );
+    return;
+  }
+
+  setBrainyHistoryStatus(
+    `Profil BGW relié à ${brainyProfile.display_name} · le résultat amical sera validé et enregistré par Supabase.`,
+    true,
+  );
+  el['create-name'].value = brainyProfile.display_name.slice(0, 20);
+  el['join-name'].value = brainyProfile.display_name.slice(0, 20);
+}
+
 async function rpc(name, args = {}) {
   const { data, error } = await client.rpc(name, args);
   if (error) throw error;
@@ -165,6 +203,7 @@ async function ensureSession() {
     session = result.data.session;
   }
   client.realtime.setAuth(session.access_token);
+  await refreshBrainyProfileStatus(session);
 }
 
 function buildGrid(container, cells) {

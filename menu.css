@@ -67,6 +67,12 @@
 .online-toolbar { gap: 12px; margin-bottom: 14px; }
 .online-toolbar .room-meta { color: var(--muted); font-size: .8rem; }
 .online-toolbar .room-meta strong { color: var(--text); letter-spacing: .1em; }
+.brainy-history-tools { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px 12px; text-align: right; }
+.brainy-profile-seat { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: .75rem; font-weight: 800; }
+.brainy-profile-seat select { padding: 6px 9px; border: 1px solid var(--line); border-radius: 9px; color: var(--text); background: var(--surface); font: inherit; }
+.brainy-profile-seat select:focus-visible { border-color: var(--accent); outline: 2px solid rgba(138,247,211,.3); }
+.brainy-history-linked { color: var(--accent) !important; }
+.brainy-history-pending { color: var(--yellow) !important; }
 .buzz-button { width: 100%; margin-top: 14px; padding: 15px; border: 1px solid rgba(138,247,211,.46); border-radius: 14px; color: #07130f; background: var(--accent); cursor: pointer; font-weight: 900; }
 .buzz-button:disabled { color: var(--muted); background: rgba(255,255,255,.05); cursor: default; opacity: .7; }
 .connection-dot { display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; background: var(--muted); }
@@ -113,6 +119,8 @@
   .mode-card > div { max-width: 100%; }
   .mode-action { position: static; align-self: flex-end; margin-top: 22px; }
   .menu-footer { align-items: flex-start; flex-direction: column; }
+  .online-toolbar { align-items: flex-start; }
+  .brainy-history-tools { max-width: 62%; }
 }
 
 

@@ -15,7 +15,19 @@
     <span>J2 · BUZZER</span>
   </button>
   <main class="game-shell">
-    <div class="online-toolbar"><a class="back-link" href="index.html">← Menu des modes</a><span class="room-meta">1v1 local · même clavier</span></div>
+    <div class="online-toolbar">
+      <a class="back-link" href="index.html">← Menu des modes</a>
+      <div class="brainy-history-tools">
+        <span id="brainy-history-status" class="room-meta">Historique BGW : profil non connecté</span>
+        <label id="brainy-profile-seat-control" class="brainy-profile-seat hidden">
+          Mon profil joue
+          <select id="brainy-profile-seat" aria-label="Joueur associé à mon profil Brainy Games Hub">
+            <option value="1">J1</option>
+            <option value="2">J2</option>
+          </select>
+        </label>
+      </div>
+    </div>
     <header class="game-header">
       <div><p class="eyebrow">Fusion mentale · 1v1 local</p><h1>Elite Pixel Art</h1></div>
       <button id="rules-button" class="secondary-button" type="button">Règles</button>
@@ -49,6 +61,8 @@
   <dialog id="rules-dialog" class="game-dialog rules-dialog"><div class="dialog-content"><button id="close-rules-button" class="dialog-close" type="button" aria-label="Fermer">×</button><p class="eyebrow">Comment jouer</p><h2>Reproduisez mentalement le modèle</h2><ol><li>Observez les 9 cartes et imaginez-en exactement 3 superposées.</li><li>Chaque carte peut tourner de 0°, 90°, 180° ou 270°, sans miroir.</li><li>Une case contenant deux couleurs identiques et une troisième différente est invalide.</li><li>Au clavier, J1 buzze avec <kbd>Espace</kbd> et J2 avec <kbd>Entrée</kbd>.</li><li>Sur smartphone, J1 utilise le buzzer du bas et J2 le buzzer retourné en haut.</li><li>Après un buzz, le joueur a 15 secondes pour sélectionner 3 cartes.</li><li>Une erreur donne 30 secondes exclusives à l’adversaire, puis une nouvelle minute commune.</li><li>Le premier joueur qui atteint le format <strong id="rules-format">FT2</strong> remporte la partie.</li></ol><p>Chaque énigme possède un seul trio valide et une seule disposition de rotations.</p></div></dialog>
 
   <template id="card-template"><button class="puzzle-card" type="button"><span class="card-number"></span><span class="pixel-grid card-grid"></span><span class="selected-marker">✓</span></button></template>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
+  <script src="src/supabase-config.js"></script>
   <script type="module" src="src/app.js"></script>
 </body>
 </html>
