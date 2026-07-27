@@ -1,3 +1,4 @@
+
 import {
   CELL,
   generatePuzzle,
@@ -155,7 +156,7 @@ async function refreshBrainyProfile(session) {
   brainyHistory.listenForReconnect();
   elements.brainyProfileSeatControl.classList.remove('hidden');
   setBrainyHistoryStatus(
-    `Historique BGW reliÃ© Ã  ${profile.display_name}`,
+    `Historique BGW relié à ${profile.display_name}`,
     'brainy-history-linked',
   );
   const sync = await brainyHistory.flush();
@@ -215,18 +216,18 @@ async function recordFriendlyLocalMatch(winner) {
   });
 
   setBrainyHistoryStatus(
-    'Partie amicale en cours de synchronisationâ€¦',
+    'Partie amicale en cours de synchronisation…',
     'brainy-history-pending',
   );
   const result = await brainyHistory.queueAndSync(event);
   if (result.sync.synced.length) {
     setBrainyHistoryStatus(
-      'Partie amicale enregistrÃ©e dans votre historique BGW',
+      'Partie amicale enregistrée dans votre historique BGW',
       'brainy-history-linked',
     );
   } else {
     setBrainyHistoryStatus(
-      'Partie conservÃ©e sur cet appareil, synchronisation dÃ¨s le retour dâ€™Internet',
+      'Partie conservée sur cet appareil, synchronisation dès le retour d’Internet',
       'brainy-history-pending',
     );
   }
@@ -379,22 +380,22 @@ function setStatus(phaseLabel, message, timerLabel) {
 function updatePhaseCopy() {
   if (state.phase === PHASE.SHARED) {
     setStatus(
-      'RÃ©flexion commune',
+      'Réflexion commune',
       usesTouchBuzzers()
-        ? 'J1 buzze en bas Â· J2 buzze en haut. Appuyez seulement quand vous avez votre trio.'
-        : 'J1 : Espace Â· J2 : EntrÃ©e. Buzzez seulement quand vous avez votre trio.',
-      'Temps de rÃ©flexion',
+        ? 'J1 buzze en bas · J2 buzze en haut. Appuyez seulement quand vous avez votre trio.'
+        : 'J1 : Espace · J2 : Entrée. Buzzez seulement quand vous avez votre trio.',
+      'Temps de réflexion',
     );
   } else if (state.phase === PHASE.ANSWER) {
     setStatus(
       `Proposition du joueur ${state.currentPlayer}`,
-      `Joueur ${state.currentPlayer}, sÃ©lectionnez exactement trois cartes puis vÃ©rifiez.`,
-      'Temps pour rÃ©pondre',
+      `Joueur ${state.currentPlayer}, sélectionnez exactement trois cartes puis vérifiez.`,
+      'Temps pour répondre',
     );
   } else if (state.phase === PHASE.EXCLUSIVE) {
     setStatus(
       `Riposte exclusive du joueur ${state.currentPlayer}`,
-      `Le joueur ${state.currentPlayer} peut rÃ©pondre sans Ãªtre interrompu.`,
+      `Le joueur ${state.currentPlayer} peut répondre sans être interrompu.`,
       'Temps exclusif',
     );
   }
@@ -489,9 +490,9 @@ function handleIncorrectAnswer() {
 
   if (origin === PHASE.SHARED) {
     startExclusive(player === 1 ? 2 : 1);
-    elements.statusMessage.textContent = `RÃ©ponse incorrecte du joueur ${player}. Son adversaire a 30 secondes exclusives.`;
+    elements.statusMessage.textContent = `Réponse incorrecte du joueur ${player}. Son adversaire a 30 secondes exclusives.`;
   } else {
-    startSharedMinute(`RÃ©ponse incorrecte du joueur ${player}. Une nouvelle minute commune commence.`);
+    startSharedMinute(`Réponse incorrecte du joueur ${player}. Une nouvelle minute commune commence.`);
   }
 }
 
@@ -505,7 +506,7 @@ function renderSolutionEquation() {
 
     const label = document.createElement('strong');
     const degrees = rotations[index] * 90;
-    label.textContent = `Carte ${cardIndex + 1} Â· ${degrees}Â°`;
+    label.textContent = `Carte ${cardIndex + 1} · ${degrees}°`;
 
     const rotatingGrid = createGrid(rotateCard(state.puzzle.cards[cardIndex], rotations[index]), 'solution-grid');
     rotatingGrid.style.setProperty('--delay', `${index * 180}ms`);
@@ -533,7 +534,7 @@ function renderSolutionEquation() {
   const modelWrap = document.createElement('div');
   modelWrap.className = 'solution-card-wrap final-model';
   const label = document.createElement('strong');
-  label.textContent = 'ModÃ¨le';
+  label.textContent = 'Modèle';
   modelWrap.append(label, createGrid(state.puzzle.model, 'solution-grid'));
   elements.solutionEquation.append(modelWrap);
 }
@@ -559,7 +560,7 @@ function revealRound({ winner = null, reason }) {
     elements.revealTitle.textContent = 'Combinaison correcte';
   } else {
     elements.revealKicker.textContent = 'Aucun point';
-    elements.revealTitle.textContent = 'Temps Ã©coulÃ©';
+    elements.revealTitle.textContent = 'Temps écoulé';
   }
 
   elements.revealMessage.textContent = reason;
@@ -572,14 +573,14 @@ function revealRound({ winner = null, reason }) {
   if (matchWinner) {
     state.phase = PHASE.MATCH_OVER;
     elements.revealKicker.textContent = `Victoire du joueur ${matchWinner}`;
-    elements.revealTitle.textContent = 'Partie remportÃ©e !';
-    elements.nextRoundButton.textContent = `J1 Â· PrÃªt pour rejouer un FT${SCORE_LIMIT}`;
-    elements.nextRoundButtonTwo.textContent = `J2 Â· PrÃªt pour rejouer un FT${SCORE_LIMIT}`;
+    elements.revealTitle.textContent = 'Partie remportée !';
+    elements.nextRoundButton.textContent = `J1 · Prêt pour rejouer un FT${SCORE_LIMIT}`;
+    elements.nextRoundButtonTwo.textContent = `J2 · Prêt pour rejouer un FT${SCORE_LIMIT}`;
     void recordFriendlyLocalMatch(matchWinner);
     syncWakeLock();
   } else {
-    elements.nextRoundButton.textContent = 'J1 Â· PrÃªt pour la manche suivante';
-    elements.nextRoundButtonTwo.textContent = 'J2 Â· PrÃªt pour la manche suivante';
+    elements.nextRoundButton.textContent = 'J1 · Prêt pour la manche suivante';
+    elements.nextRoundButtonTwo.textContent = 'J2 · Prêt pour la manche suivante';
   }
   elements.nextRoundButton.disabled = false;
   elements.nextRoundButtonTwo.disabled = false;
@@ -654,9 +655,9 @@ function markRoundReady(player) {
   state.roundReady.add(player);
   const button = player === 1 ? elements.nextRoundButton : elements.nextRoundButtonTwo;
   button.disabled = true;
-  button.textContent = `J${player} Â· PrÃªt âœ“`;
+  button.textContent = `J${player} · Prêt ✓`;
   elements.revealMessage.textContent = state.roundReady.size === 1
-    ? `J${player} est prÃªt. En attente de lâ€™autre joueurâ€¦`
+    ? `J${player} est prêt. En attente de l’autre joueur…`
     : elements.revealMessage.textContent;
   if (state.roundReady.size === 2) startNextRound();
 }
@@ -672,17 +673,17 @@ function tick(now) {
     if (state.totalRemaining <= 0) {
       state.totalRemaining = 0;
       updateTimers();
-      endRoundForTimeout('La limite totale de cinq minutes a Ã©tÃ© atteinte.');
+      endRoundForTimeout('La limite totale de cinq minutes a été atteinte.');
     } else if (state.phaseRemaining <= 0) {
       state.phaseRemaining = 0;
       updateTimers();
 
       if (state.phase === PHASE.SHARED) {
-        endRoundForTimeout('La minute de rÃ©flexion commune est Ã©coulÃ©e.');
+        endRoundForTimeout('La minute de réflexion commune est écoulée.');
       } else if (state.phase === PHASE.ANSWER) {
         handleIncorrectAnswer();
       } else if (state.phase === PHASE.EXCLUSIVE) {
-        startSharedMinute('Les 30 secondes exclusives sont Ã©coulÃ©es. Une nouvelle minute commune commence.');
+        startSharedMinute('Les 30 secondes exclusives sont écoulées. Une nouvelle minute commune commence.');
       }
     } else {
       updateTimers();
@@ -751,4 +752,3 @@ brainyReady = initBrainyHistory().catch(() => {
   setBrainyHistoryStatus('Historique BGW indisponible');
 });
 requestAnimationFrame(tick);
-
