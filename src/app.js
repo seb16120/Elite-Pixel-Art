@@ -40,6 +40,17 @@ const CELL_CLASS = Object.freeze({
   [CELL.BLACK]: 'black',
 });
 
+const INVERSE_MARKER_COLOR = Object.freeze({
+  [CELL.EMPTY]: '#ff4f5e',
+  [CELL.RED]: '#00b0a1',
+  [CELL.YELLOW]: '#0027b2',
+  [CELL.BLUE]: '#b08200',
+  [CELL.ORANGE]: '#0067d1',
+  [CELL.VIOLET]: '#63aa20',
+  [CELL.GREEN]: '#d03087',
+  [CELL.BLACK]: '#ffffff',
+});
+
 const state = {
   puzzle: null,
   phase: PHASE.SHARED,
@@ -48,6 +59,9 @@ const state = {
   currentPlayer: null,
   answerOrigin: null,
   selectedCards: [],
+  flaggedCards: new Set(),
+  crossedCards: new Set(),
+  roundReady: new Set(),
   scores: { 1: 0, 2: 0 },
   round: 1,
   lastTick: performance.now(),
@@ -78,6 +92,7 @@ const elements = {
   revealMessage: document.querySelector('#reveal-message'),
   solutionEquation: document.querySelector('#solution-equation'),
   nextRoundButton: document.querySelector('#next-round-button'),
+  nextRoundButtonTwo: document.querySelector('#next-round-button-two'),
   closeRevealButton: document.querySelector('#close-reveal-button'),
   endMenuButton: document.querySelector('#end-menu-button'),
   mainMenuButton: document.querySelector('#main-menu-button'),
@@ -140,7 +155,7 @@ async function refreshBrainyProfile(session) {
   brainyHistory.listenForReconnect();
   elements.brainyProfileSeatControl.classList.remove('hidden');
   setBrainyHistoryStatus(
-    `Historique BGW relié à ${profile.display_name}`,
+    `Historique BGW reliÃ© Ã  ${profile.display_name}`,
     'brainy-history-linked',
   );
   const sync = await brainyHistory.flush();
@@ -200,18 +215,18 @@ async function recordFriendlyLocalMatch(winner) {
   });
 
   setBrainyHistoryStatus(
-    'Partie amicale en cours de synchronisation…',
+    'Partie amicale en cours de synchronisationâ€¦',
     'brainy-history-pending',
   );
   const result = await brainyHistory.queueAndSync(event);
   if (result.sync.synced.length) {
     setBrainyHistoryStatus(
-      'Partie amicale enregistrée dans votre historique BGW',
+      'Partie amicale enregistrÃ©e dans votre historique BGW',
       'brainy-history-linked',
     );
   } else {
     setBrainyHistoryStatus(
-      'Partie conservée sur cet appareil, synchronisation dès le retour d’Internet',
+      'Partie conservÃ©e sur cet appareil, synchronisation dÃ¨s le retour dâ€™Internet',
       'brainy-history-pending',
     );
   }
@@ -275,10 +290,13 @@ function renderCards() {
 
     button.dataset.cardIndex = String(index);
     button.classList.add(`model-slot-${CELL_CLASS[state.puzzle.model[index]] ?? 'empty'}`);
+    button.classList.toggle('flagged', state.flaggedCards.has(index));
+    button.classList.toggle('crossed', state.crossedCards.has(index));
+    button.style.setProperty('--cross-color', INVERSE_MARKER_COLOR[state.puzzle.model[index]]);
     button.setAttribute('aria-label', `Carte ${index + 1}`);
     number.textContent = String(index + 1).padStart(2, '0');
     grid.replaceChildren(...createGrid(card).children);
-    button.addEventListener('click', () => toggleCard(index));
+    button.addEventListener('click', (event) => handleCardClick(event, index));
 
     elements.cardsGrid.append(fragment);
   });
@@ -306,7 +324,8 @@ function renderSelection() {
     const cardIndex = Number(button.dataset.cardIndex);
     const selected = state.selectedCards.includes(cardIndex);
     button.classList.toggle('selected', selected);
-    button.disabled = !isSelectionPhase();
+    button.classList.toggle('selection-disabled', !isSelectionPhase());
+    button.setAttribute('aria-disabled', String(!isSelectionPhase()));
     button.setAttribute('aria-pressed', String(selected));
   });
 
@@ -360,22 +379,22 @@ function setStatus(phaseLabel, message, timerLabel) {
 function updatePhaseCopy() {
   if (state.phase === PHASE.SHARED) {
     setStatus(
-      'Réflexion commune',
+      'RÃ©flexion commune',
       usesTouchBuzzers()
-        ? 'J1 buzze en bas · J2 buzze en haut. Appuyez seulement quand vous avez votre trio.'
-        : 'J1 : Espace · J2 : Entrée. Buzzez seulement quand vous avez votre trio.',
-      'Temps de réflexion',
+        ? 'J1 buzze en bas Â· J2 buzze en haut. Appuyez seulement quand vous avez votre trio.'
+        : 'J1 : Espace Â· J2 : EntrÃ©e. Buzzez seulement quand vous avez votre trio.',
+      'Temps de rÃ©flexion',
     );
   } else if (state.phase === PHASE.ANSWER) {
     setStatus(
       `Proposition du joueur ${state.currentPlayer}`,
-      `Joueur ${state.currentPlayer}, sélectionnez exactement trois cartes puis vérifiez.`,
-      'Temps pour répondre',
+      `Joueur ${state.currentPlayer}, sÃ©lectionnez exactement trois cartes puis vÃ©rifiez.`,
+      'Temps pour rÃ©pondre',
     );
   } else if (state.phase === PHASE.EXCLUSIVE) {
     setStatus(
       `Riposte exclusive du joueur ${state.currentPlayer}`,
-      `Le joueur ${state.currentPlayer} peut répondre sans être interrompu.`,
+      `Le joueur ${state.currentPlayer} peut rÃ©pondre sans Ãªtre interrompu.`,
       'Temps exclusif',
     );
   }
@@ -403,6 +422,30 @@ function toggleCard(cardIndex) {
   }
 
   renderSelection();
+}
+
+function handleCardClick(event, cardIndex) {
+  if (event.ctrlKey) {
+    event.preventDefault();
+    state.crossedCards.delete(cardIndex);
+    if (state.flaggedCards.has(cardIndex)) state.flaggedCards.delete(cardIndex);
+    else state.flaggedCards.add(cardIndex);
+    renderCards();
+    renderSelection();
+    return;
+  }
+
+  if (event.altKey) {
+    event.preventDefault();
+    state.flaggedCards.delete(cardIndex);
+    if (state.crossedCards.has(cardIndex)) state.crossedCards.delete(cardIndex);
+    else state.crossedCards.add(cardIndex);
+    renderCards();
+    renderSelection();
+    return;
+  }
+
+  toggleCard(cardIndex);
 }
 
 function startSharedMinute(message = null) {
@@ -446,9 +489,9 @@ function handleIncorrectAnswer() {
 
   if (origin === PHASE.SHARED) {
     startExclusive(player === 1 ? 2 : 1);
-    elements.statusMessage.textContent = `Réponse incorrecte du joueur ${player}. Son adversaire a 30 secondes exclusives.`;
+    elements.statusMessage.textContent = `RÃ©ponse incorrecte du joueur ${player}. Son adversaire a 30 secondes exclusives.`;
   } else {
-    startSharedMinute(`Réponse incorrecte du joueur ${player}. Une nouvelle minute commune commence.`);
+    startSharedMinute(`RÃ©ponse incorrecte du joueur ${player}. Une nouvelle minute commune commence.`);
   }
 }
 
@@ -462,7 +505,7 @@ function renderSolutionEquation() {
 
     const label = document.createElement('strong');
     const degrees = rotations[index] * 90;
-    label.textContent = `Carte ${cardIndex + 1} · ${degrees}°`;
+    label.textContent = `Carte ${cardIndex + 1} Â· ${degrees}Â°`;
 
     const rotatingGrid = createGrid(rotateCard(state.puzzle.cards[cardIndex], rotations[index]), 'solution-grid');
     rotatingGrid.style.setProperty('--delay', `${index * 180}ms`);
@@ -490,7 +533,7 @@ function renderSolutionEquation() {
   const modelWrap = document.createElement('div');
   modelWrap.className = 'solution-card-wrap final-model';
   const label = document.createElement('strong');
-  label.textContent = 'Modèle';
+  label.textContent = 'ModÃ¨le';
   modelWrap.append(label, createGrid(state.puzzle.model, 'solution-grid'));
   elements.solutionEquation.append(modelWrap);
 }
@@ -516,25 +559,30 @@ function revealRound({ winner = null, reason }) {
     elements.revealTitle.textContent = 'Combinaison correcte';
   } else {
     elements.revealKicker.textContent = 'Aucun point';
-    elements.revealTitle.textContent = 'Temps écoulé';
+    elements.revealTitle.textContent = 'Temps Ã©coulÃ©';
   }
 
   elements.revealMessage.textContent = reason;
 
   const matchWinner = winner && state.scores[winner] >= SCORE_LIMIT ? winner : null;
-  elements.closeRevealButton.classList.toggle('hidden', !matchWinner);
+  state.roundReady.clear();
+  elements.closeRevealButton.classList.remove('hidden');
   elements.mainMenuButton.classList.toggle('hidden', !matchWinner);
   elements.endMenuButton.classList.add('hidden');
   if (matchWinner) {
     state.phase = PHASE.MATCH_OVER;
     elements.revealKicker.textContent = `Victoire du joueur ${matchWinner}`;
-    elements.revealTitle.textContent = 'Partie remportée !';
-    elements.nextRoundButton.textContent = `Rejouer un FT${SCORE_LIMIT}`;
+    elements.revealTitle.textContent = 'Partie remportÃ©e !';
+    elements.nextRoundButton.textContent = `J1 Â· PrÃªt pour rejouer un FT${SCORE_LIMIT}`;
+    elements.nextRoundButtonTwo.textContent = `J2 Â· PrÃªt pour rejouer un FT${SCORE_LIMIT}`;
     void recordFriendlyLocalMatch(matchWinner);
     syncWakeLock();
   } else {
-    elements.nextRoundButton.textContent = 'Manche suivante';
+    elements.nextRoundButton.textContent = 'J1 Â· PrÃªt pour la manche suivante';
+    elements.nextRoundButtonTwo.textContent = 'J2 Â· PrÃªt pour la manche suivante';
   }
+  elements.nextRoundButton.disabled = false;
+  elements.nextRoundButtonTwo.disabled = false;
 
   elements.revealDialog.showModal();
   playSolutionAnimations();
@@ -568,6 +616,9 @@ function createRound() {
   state.currentPlayer = null;
   state.answerOrigin = null;
   state.selectedCards = [];
+  state.flaggedCards.clear();
+  state.crossedCards.clear();
+  state.roundReady.clear();
   state.lastTick = performance.now();
 
   elements.roundNumber.textContent = `Manche ${state.round}`;
@@ -598,6 +649,18 @@ function startNextRound() {
   syncWakeLock();
 }
 
+function markRoundReady(player) {
+  if (![PHASE.REVEAL, PHASE.MATCH_OVER].includes(state.phase)) return;
+  state.roundReady.add(player);
+  const button = player === 1 ? elements.nextRoundButton : elements.nextRoundButtonTwo;
+  button.disabled = true;
+  button.textContent = `J${player} Â· PrÃªt âœ“`;
+  elements.revealMessage.textContent = state.roundReady.size === 1
+    ? `J${player} est prÃªt. En attente de lâ€™autre joueurâ€¦`
+    : elements.revealMessage.textContent;
+  if (state.roundReady.size === 2) startNextRound();
+}
+
 function tick(now) {
   const elapsed = Math.min((now - state.lastTick) / 1000, 0.25);
   state.lastTick = now;
@@ -609,17 +672,17 @@ function tick(now) {
     if (state.totalRemaining <= 0) {
       state.totalRemaining = 0;
       updateTimers();
-      endRoundForTimeout('La limite totale de cinq minutes a été atteinte.');
+      endRoundForTimeout('La limite totale de cinq minutes a Ã©tÃ© atteinte.');
     } else if (state.phaseRemaining <= 0) {
       state.phaseRemaining = 0;
       updateTimers();
 
       if (state.phase === PHASE.SHARED) {
-        endRoundForTimeout('La minute de réflexion commune est écoulée.');
+        endRoundForTimeout('La minute de rÃ©flexion commune est Ã©coulÃ©e.');
       } else if (state.phase === PHASE.ANSWER) {
         handleIncorrectAnswer();
       } else if (state.phase === PHASE.EXCLUSIVE) {
-        startSharedMinute('Les 30 secondes exclusives sont écoulées. Une nouvelle minute commune commence.');
+        startSharedMinute('Les 30 secondes exclusives sont Ã©coulÃ©es. Une nouvelle minute commune commence.');
       }
     } else {
       updateTimers();
@@ -642,14 +705,18 @@ function handleKeydown(event) {
 
 elements.verifyButton.addEventListener('click', submitAnswer);
 elements.mobileVerifyTop.addEventListener('click', submitAnswer);
-elements.nextRoundButton.addEventListener('click', startNextRound);
+elements.nextRoundButton.addEventListener('click', () => markRoundReady(1));
+elements.nextRoundButtonTwo.addEventListener('click', () => markRoundReady(2));
 elements.closeRevealButton.addEventListener('click', () => {
-  if (state.phase !== PHASE.MATCH_OVER) return;
+  if (![PHASE.REVEAL, PHASE.MATCH_OVER].includes(state.phase)) return;
   elements.revealDialog.close();
   elements.endMenuButton.classList.remove('hidden');
+  elements.endMenuButton.textContent = state.phase === PHASE.MATCH_OVER
+    ? 'Ouvrir le menu de fin de partie'
+    : 'Ouvrir le menu de fin de manche';
 });
 elements.endMenuButton.addEventListener('click', () => {
-  if (state.phase !== PHASE.MATCH_OVER) return;
+  if (![PHASE.REVEAL, PHASE.MATCH_OVER].includes(state.phase)) return;
   elements.endMenuButton.classList.add('hidden');
   elements.revealDialog.showModal();
   playSolutionAnimations();
@@ -684,3 +751,4 @@ brainyReady = initBrainyHistory().catch(() => {
   setBrainyHistoryStatus('Historique BGW indisponible');
 });
 requestAnimationFrame(tick);
+
