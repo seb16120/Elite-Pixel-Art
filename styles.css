@@ -423,7 +423,7 @@ h2 {
   color: #0b1022;
 }
 
-.puzzle-card:not(:disabled):hover {
+.puzzle-card:not(.selection-disabled):hover {
   z-index: 1;
   transform: translateY(-2px);
   border-color: rgba(var(--slot-border-rgb), 1);
@@ -497,6 +497,60 @@ h2 {
   transform: scale(1);
 }
 
+.flag-marker,
+.cross-marker {
+  position: absolute;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: 140ms ease;
+}
+
+.flag-marker {
+  top: 7px;
+  right: 7px;
+  width: 25px;
+  height: 25px;
+  border-radius: 7px;
+  color: #10152a;
+  background: #ffd84d;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.38);
+  font-size: 0.95rem;
+}
+
+.cross-marker {
+  top: 50%;
+  left: 50%;
+  color: var(--cross-color, #ff4f5e);
+  font-size: clamp(2.2rem, 4vw, 3.8rem);
+  font-weight: 950;
+  line-height: 1;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.78);
+  transform: translate(-50%, -50%) scale(0.7);
+}
+
+.puzzle-card.flagged .flag-marker {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.puzzle-card.crossed .cross-marker {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.puzzle-card.selection-disabled {
+  cursor: default;
+}
+
+.annotation-help {
+  color: var(--accent);
+  font-weight: 800;
+}
+
 .verify-button {
   width: 100%;
   margin-top: 16px;
@@ -546,13 +600,16 @@ h2 {
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 24px;
   color: var(--text);
-  background: #12172b;
+  background: rgba(18, 23, 43, 0.84);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
   box-shadow: 0 30px 120px rgba(0, 0, 0, 0.72);
 }
 
 .game-dialog::backdrop {
-  background: rgba(3, 5, 12, 0.78);
-  backdrop-filter: blur(8px);
+  background: rgba(3, 5, 12, 0.48);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
 }
 
 .dialog-content {
@@ -851,6 +908,14 @@ kbd {
   gap: 10px;
 }
 
+.local-ready-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.local-ready-actions .main-menu-button {
+  grid-column: 1 / -1;
+}
+
 .end-dialog-actions .verify-button {
   margin-top: 0;
 }
@@ -934,6 +999,26 @@ kbd {
     height: 18px;
     font-size: 0.66rem;
   }
+
+  .flag-marker {
+    top: 5px;
+    right: 5px;
+    width: 19px;
+    height: 19px;
+    font-size: 0.72rem;
+  }
+
+  .cross-marker {
+    font-size: 2.1rem;
+  }
+
+  .local-ready-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .local-ready-actions .main-menu-button {
+    grid-column: auto;
+  }
 }
 
 @media (max-width: 620px) {
@@ -953,7 +1038,7 @@ kbd {
 }
 
 
-/* Repère d'exclusivité du duel local sur PC */
+/* RepÃ¨re d'exclusivitÃ© du duel local sur PC */
 .local-answer-controls {
   display: grid;
   grid-template-columns: minmax(58px, 0.16fr) minmax(0, 1fr) minmax(58px, 0.16fr);
@@ -1125,6 +1210,141 @@ kbd {
   }
 }
 
+/* Le duel online tient lui aussi dans une seule hauteur d'Ã©cran sur PC. */
+@media (min-width: 951px) and (min-height: 700px) and (max-height: 1100px) {
+  .online-page.game-active {
+    overflow: hidden;
+  }
+
+  .online-page.game-active .game-shell {
+    display: flex;
+    flex-direction: column;
+    width: min(1360px, calc(100% - 28px));
+    height: 100dvh;
+    padding: 9px 0 10px;
+  }
+
+  .online-page.game-active .online-toolbar,
+  .online-page.game-active .game-header,
+  .online-page.game-active .scoreboard,
+  .online-page.game-active .game-status,
+  .online-page.game-active .fusion-legend {
+    flex: 0 0 auto;
+  }
+
+  .online-page.game-active .game-header {
+    margin-bottom: 7px;
+  }
+
+  .online-page.game-active .game-header h1 {
+    font-size: clamp(1.85rem, 2.7vw, 2.55rem);
+  }
+
+  .online-page.game-active .scoreboard {
+    gap: 10px;
+    padding: 7px;
+  }
+
+  .online-page.game-active .player-panel {
+    min-height: 50px;
+    padding: 7px 11px;
+  }
+
+  .online-page.game-active .game-status {
+    gap: 12px;
+    margin-top: 7px;
+    padding: 8px 12px;
+  }
+
+  .online-page.game-active .buzz-button {
+    margin-top: 6px;
+    padding-block: 8px;
+  }
+
+  .online-page.game-active .timer-card {
+    min-width: 112px;
+    padding: 5px 9px;
+  }
+
+  .online-page.game-active .timer-card strong {
+    font-size: 1.15rem;
+  }
+
+  .online-page.game-active .puzzle-layout {
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 9px;
+    margin-top: 7px;
+  }
+
+  .online-page.game-active .model-panel,
+  .online-page.game-active .cards-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 11px;
+    border-radius: 17px;
+  }
+
+  .online-page.game-active .section-heading {
+    flex: 0 0 auto;
+    margin-bottom: 7px;
+  }
+
+  .online-page.game-active .model-grid {
+    width: min(100%, 205px);
+    margin: auto;
+  }
+
+  .online-page.game-active .model-note {
+    flex: 0 0 auto;
+    margin-top: 5px;
+  }
+
+  .online-page.game-active .cards-grid {
+    flex: 1 1 auto;
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    min-height: 0;
+    gap: 5px;
+  }
+
+  .online-page.game-active .puzzle-card {
+    justify-content: center;
+    min-height: 0;
+    gap: 5px;
+    overflow: hidden;
+    padding: 5px;
+    border-radius: 10px;
+  }
+
+  .online-page.game-active .card-grid {
+    width: auto;
+    height: 100%;
+    max-width: calc(100% - 23px);
+    max-height: 100%;
+    flex: 0 1 auto;
+  }
+
+  .online-page.game-active .card-number {
+    flex: 0 0 auto;
+    font-size: 0.66rem;
+  }
+
+  .online-page.game-active .verify-button {
+    flex: 0 0 auto;
+    min-height: 38px;
+    margin-top: 6px;
+    padding-block: 7px;
+  }
+
+  .online-page.game-active .fusion-legend {
+    gap: 5px 12px;
+    margin-top: 6px;
+    padding: 7px 10px;
+    font-size: 0.69rem;
+  }
+}
+
 @media (max-width: 950px) {
   .local-answer-controls {
     display: block;
@@ -1141,3 +1361,4 @@ kbd {
   color: var(--yellow);
   text-shadow: 0 0 18px rgba(255, 216, 77, 0.22);
 }
+
