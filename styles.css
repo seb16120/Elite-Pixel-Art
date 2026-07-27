@@ -1074,7 +1074,7 @@ kbd {
 }
 
 /* Sur les PC peu hauts, tout le plateau reste dans la hauteur visible. */
-@media (min-width: 951px) and (min-height: 700px) and (max-height: 1100px) {
+@media (min-width: 951px) and (min-height: 700px) {
   .local-page {
     overflow: hidden;
   }
@@ -1224,7 +1224,7 @@ kbd {
 }
 
 /* Le duel online tient lui aussi dans une seule hauteur d'écran sur PC. */
-@media (min-width: 951px) and (min-height: 700px) and (max-height: 1100px) {
+@media (min-width: 951px) and (min-height: 700px) {
   .online-page.game-active {
     overflow: hidden;
   }
