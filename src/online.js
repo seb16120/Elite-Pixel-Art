@@ -1,3 +1,4 @@
+
 import {
   CELL,
   rotateCard,
@@ -134,14 +135,14 @@ function formatError(error) {
   const message = error?.message ?? String(error ?? 'Erreur inconnue');
   const known = {
     ROOM_NOT_FOUND: 'Ce salon est introuvable.',
-    ROOM_FULL: 'Ce salon contient dÃ©jÃ  deux joueurs.',
-    ROOM_ALREADY_STARTED: 'Cette partie a dÃ©jÃ  commencÃ©.',
+    ROOM_FULL: 'Ce salon contient déjà deux joueurs.',
+    ROOM_ALREADY_STARTED: 'Cette partie a déjà commencé.',
     NOT_MEMBER: 'Vous ne faites plus partie de ce salon.',
-    NOT_YOUR_TURN: 'Ce nâ€™est pas votre temps de rÃ©ponse.',
-    BUZZ_CLOSED: 'Le buzzer est dÃ©jÃ  fermÃ©.',
-    PLAYER_NOT_READY: 'Les deux joueurs doivent Ãªtre prÃªts.',
-    INVALID_SELECTION: 'SÃ©lection invalide.',
-    PUZZLE_NOT_READY: 'Lâ€™Ã©nigme serveur nâ€™est pas prÃªte.',
+    NOT_YOUR_TURN: 'Ce n’est pas votre temps de réponse.',
+    BUZZ_CLOSED: 'Le buzzer est déjà fermé.',
+    PLAYER_NOT_READY: 'Les deux joueurs doivent être prêts.',
+    INVALID_SELECTION: 'Sélection invalide.',
+    PUZZLE_NOT_READY: 'L’énigme serveur n’est pas prête.',
   };
   return Object.entries(known).find(([code]) => message.includes(code))?.[1] ?? message;
 }
@@ -151,7 +152,7 @@ function setNotice(message, isError = false) {
   el['waiting-notice'].classList.toggle('error', isError);
 }
 
-function setConnection(isConnected, label = isConnected ? 'SynchronisÃ©' : 'Reconnexionâ€¦') {
+function setConnection(isConnected, label = isConnected ? 'Synchronisé' : 'Reconnexion…') {
   connected = isConnected;
   el['connection-label'].textContent = label;
   el['connection-dot'].classList.toggle('online', isConnected);
@@ -166,7 +167,7 @@ async function refreshBrainyProfileStatus(session) {
   if (!session?.user || session.user.is_anonymous) {
     brainyProfile = null;
     setBrainyHistoryStatus(
-      'Sans profil BGW : la partie reste jouable, mais elle ne sera pas ajoutÃ©e Ã  un historique personnel.',
+      'Sans profil BGW : la partie reste jouable, mais elle ne sera pas ajoutée à un historique personnel.',
     );
     return;
   }
@@ -180,13 +181,13 @@ async function refreshBrainyProfileStatus(session) {
 
   if (!brainyProfile) {
     setBrainyHistoryStatus(
-      'Compte reconnu, mais profil BGW introuvable : le rÃ©sultat ne sera pas reliÃ©.',
+      'Compte reconnu, mais profil BGW introuvable : le résultat ne sera pas relié.',
     );
     return;
   }
 
   setBrainyHistoryStatus(
-    `Profil BGW reliÃ© Ã  ${brainyProfile.display_name} Â· le rÃ©sultat amical sera validÃ© et enregistrÃ© par Supabase.`,
+    `Profil BGW relié à ${brainyProfile.display_name} · le résultat amical sera validé et enregistré par Supabase.`,
     true,
   );
   el['create-name'].value = brainyProfile.display_name.slice(0, 20);
@@ -348,7 +349,7 @@ function renderPresenceWarning() {
   }
 
   presenceWarningActive = true;
-  el['phase-label'].textContent = 'Adversaire dÃ©connectÃ©';
+  el['phase-label'].textContent = 'Adversaire déconnecté';
   el['status-message'].classList.add('presence-warning');
   el['status-message'].textContent = `Reconnexion de ${reconnect.name} : ${formatDuration(reconnect.remainingMs)} avant victoire par forfait.`;
 }
@@ -382,17 +383,17 @@ function setPhaseCopy() {
   el['mobile-online-buzzer'].disabled = room.phase !== PHASE.SHARED || !connected;
   const ownTurn = room.active_player === state.seat;
   const copies = {
-    [PHASE.SHARED]: ['Buzzer ouvert', 'Espace ou EntrÃ©e : soyez le premier Ã  rÃ©pondre.', 'Temps de rÃ©flexion'],
+    [PHASE.SHARED]: ['Buzzer ouvert', 'Espace ou Entrée : soyez le premier à répondre.', 'Temps de réflexion'],
     [PHASE.ANSWER]: ownTurn
-      ? ['Ã€ vous', 'SÃ©lectionnez exactement trois cartes.', 'Temps de rÃ©ponse']
-      : ['Adversaire', `${playerName(room.active_player)} compose sa rÃ©ponseâ€¦`, 'Temps de rÃ©ponse'],
+      ? ['À vous', 'Sélectionnez exactement trois cartes.', 'Temps de réponse']
+      : ['Adversaire', `${playerName(room.active_player)} compose sa réponse…`, 'Temps de réponse'],
     [PHASE.EXCLUSIVE]: ownTurn
-      ? ['Seconde chance', 'Vous avez lâ€™exclusivitÃ© : choisissez trois cartes.', 'Temps exclusif']
+      ? ['Seconde chance', 'Vous avez l’exclusivité : choisissez trois cartes.', 'Temps exclusif']
       : ['Adversaire', `${playerName(room.active_player)} a une chance exclusive.`, 'Temps exclusif'],
-    [PHASE.REVEAL]: ['Manche terminÃ©e', room.last_reason ?? 'La solution est affichÃ©e.', 'RÃ©sultat'],
-    [PHASE.FINISHED]: ['Match terminÃ©', room.last_reason ?? `Le ${scoreFormat()} est terminÃ©.`, 'RÃ©sultat'],
+    [PHASE.REVEAL]: ['Manche terminée', room.last_reason ?? 'La solution est affichée.', 'Résultat'],
+    [PHASE.FINISHED]: ['Match terminé', room.last_reason ?? `Le ${scoreFormat()} est terminé.`, 'Résultat'],
   };
-  const [label, message, timerLabel] = copies[room.phase] ?? ['Synchronisation', 'Ã‰tat de partie en coursâ€¦', 'Temps'];
+  const [label, message, timerLabel] = copies[room.phase] ?? ['Synchronisation', 'État de partie en cours…', 'Temps'];
   el['phase-label'].textContent = label;
   el['status-message'].textContent = message;
   el['phase-timer-label'].textContent = timerLabel;
@@ -414,7 +415,7 @@ function renderSolutionEquation() {
       grid.style.setProperty('--start-rotation', `${rotation * -90}deg`);
     }
     const label = document.createElement('strong');
-    label.textContent = `Carte ${cardIndex + 1} Â· ${rotation * 90}Â°`;
+    label.textContent = `Carte ${cardIndex + 1} · ${rotation * 90}°`;
     card.append(label, grid);
     el['solution-equation'].append(card);
     if (index < 2) {
@@ -430,7 +431,7 @@ function renderSolutionEquation() {
   const model = document.createElement('div');
   model.className = 'solution-card-wrap final-model';
   const label = document.createElement('strong');
-  label.textContent = 'ModÃ¨le';
+  label.textContent = 'Modèle';
   const grid = document.createElement('span');
   grid.className = 'pixel-grid solution-grid';
   buildGrid(grid, puzzle.model);
@@ -465,16 +466,16 @@ function renderDialog() {
   el['end-menu-button'].textContent = finished
     ? 'Ouvrir le menu de fin de partie'
     : 'Ouvrir le menu de fin de manche';
-  el['reveal-kicker'].textContent = finished ? `${scoreFormat()} terminÃ©` : 'Manche terminÃ©e';
+  el['reveal-kicker'].textContent = finished ? `${scoreFormat()} terminé` : 'Manche terminée';
   el['reveal-title'].textContent = state.room.last_reason ?? 'Voici la combinaison unique';
   el['reveal-message'].textContent = phase === PHASE.FINISHED
     ? `Vous pouvez analyser la solution, puis relancer un nouveau ${scoreFormat()}.`
-    : 'Comparez votre raisonnement Ã  la solution avant la manche suivante.';
+    : 'Comparez votre raisonnement à la solution avant la manche suivante.';
   el['next-round-button'].textContent = me?.round_ready
-    ? `PrÃªt âœ“ Â· En attente de ${opponent?.display_name ?? 'lâ€™autre joueur'}â€¦`
+    ? `Prêt ✓ · En attente de ${opponent?.display_name ?? 'l’autre joueur'}…`
     : finished
-      ? `PrÃªt pour rejouer un ${scoreFormat()}`
-      : 'PrÃªt pour la manche suivante';
+      ? `Prêt pour rejouer un ${scoreFormat()}`
+      : 'Prêt pour la manche suivante';
   el['next-round-button'].disabled = Boolean(me?.round_ready) || !connected;
   const solutionKey = `${puzzleSeed}:${state.room.round_number}`;
   if (renderedSolutionKey !== solutionKey) {
@@ -504,13 +505,13 @@ function renderWaiting() {
     name.textContent = player.display_name;
     const ready = document.createElement('span');
     ready.className = player.ready ? 'ready-pill ready' : 'ready-pill';
-    ready.textContent = player.ready ? 'PrÃªt' : 'En prÃ©paration';
+    ready.textContent = player.ready ? 'Prêt' : 'En préparation';
     article.append(name, ready);
     el['players-list'].append(article);
   });
   const me = getPlayer(state.seat);
-  el['ready-button'].textContent = me?.ready ? 'Je ne suis plus prÃªt' : 'Je suis prÃªt';
-  setNotice(state.players.length < 2 ? 'Partagez le code avec votre adversaire.' : 'Les deux joueurs peuvent se dÃ©clarer prÃªts.');
+  el['ready-button'].textContent = me?.ready ? 'Je ne suis plus prêt' : 'Je suis prêt';
+  setNotice(state.players.length < 2 ? 'Partagez le code avec votre adversaire.' : 'Les deux joueurs peuvent se déclarer prêts.');
 }
 
 function renderGame() {
@@ -664,7 +665,7 @@ async function subscribeToRoom() {
     )
     .subscribe((status) => {
       const subscribed = status === 'SUBSCRIBED';
-      setConnection(subscribed, subscribed ? 'SynchronisÃ©' : 'Reconnexionâ€¦');
+      setConnection(subscribed, subscribed ? 'Synchronisé' : 'Reconnexion…');
       if (subscribed && state) void refreshState();
     });
   schedulePoll(0);
@@ -814,7 +815,7 @@ async function leaveRoom() {
   if (
     leavingWouldForfeitMatch()
     && !window.confirm(
-      'Quitter maintenant donnera la victoire Ã  votre adversaire. Voulez-vous vraiment quitter le salon ?',
+      'Quitter maintenant donnera la victoire à votre adversaire. Voulez-vous vraiment quitter le salon ?',
     )
   ) return;
 
@@ -861,11 +862,11 @@ function bindEvents() {
   });
   el['leave-button'].addEventListener('click', leaveRoom);
   el['game-leave-button'].addEventListener('click', leaveRoom);
-  el['copy-code-button'].addEventListener('click', () => copyText(state.room.code, el['copy-code-button'], 'Code copiÃ© !'));
+  el['copy-code-button'].addEventListener('click', () => copyText(state.room.code, el['copy-code-button'], 'Code copié !'));
   el['copy-link-button'].addEventListener('click', () => {
     const link = new URL('online.html', location.href);
     link.searchParams.set('room', state.room.code);
-    copyText(link.href, el['copy-link-button'], 'Lien copiÃ© !');
+    copyText(link.href, el['copy-link-button'], 'Lien copié !');
   });
   el['rules-button'].addEventListener('click', () => el['rules-dialog'].showModal());
   el['close-rules-button'].addEventListener('click', () => el['rules-dialog'].close());
@@ -920,5 +921,4 @@ async function init() {
 
 setInterval(tick, 250);
 init();
-
 
