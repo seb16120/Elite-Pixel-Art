@@ -1,4 +1,4 @@
--- Elite Pixel Art · 1v1 online beta
+-- Elite Pixel Art Â· 1v1 online beta
 -- Objects are deliberately prefixed to remain isolated from Bingo and Otrio.
 
 create table if not exists public.elite_pixel_puzzles (
@@ -67,6 +67,7 @@ create table if not exists public.elite_pixel_room_players (
   user_id uuid not null,
   display_name text not null check (char_length(display_name) between 2 and 20),
   ready boolean not null default false,
+  round_ready boolean not null default false,
   joined_at timestamptz not null default now(),
   last_seen timestamptz not null default now(),
   presence_started_at timestamptz not null default now(),
@@ -76,6 +77,9 @@ create table if not exists public.elite_pixel_room_players (
 
 alter table public.elite_pixel_room_players
   add column if not exists presence_started_at timestamptz not null default now();
+
+alter table public.elite_pixel_room_players
+  add column if not exists round_ready boolean not null default false;
 
 create index if not exists elite_pixel_room_players_user_idx
   on public.elite_pixel_room_players (user_id, room_id);
@@ -283,6 +287,7 @@ begin
         'seat', player.seat,
         'display_name', player.display_name,
         'ready', player.ready,
+        'round_ready', player.round_ready,
         'joined_at', player.joined_at,
         'last_seen', player.last_seen
       ) order by player.seat)
@@ -351,6 +356,9 @@ begin
         active_player = null, round_winner = null, last_reason = null,
         version = version + 1, updated_at = v_now
     where id = p_room_id;
+    update public.elite_pixel_room_players
+    set round_ready = false
+    where room_id = p_room_id;
   else
     update public.elite_pixel_rooms
     set version = version + 1, updated_at = v_now
@@ -465,14 +473,14 @@ begin
     update public.elite_pixel_rooms
     set phase = 'exclusive', active_player = v_other,
         phase_deadline = least(total_deadline, v_now + interval '30 seconds'),
-        last_reason = 'Réponse incorrecte : chance exclusive à l’adversaire.',
+        last_reason = 'RÃ©ponse incorrecte : chance exclusive Ã  lâ€™adversaire.',
         version = version + 1, updated_at = v_now
     where id = p_room_id;
   else
     update public.elite_pixel_rooms
     set phase = 'shared', active_player = null,
         phase_deadline = least(total_deadline, v_now + interval '60 seconds'),
-        last_reason = 'Réponse incorrecte : le buzzer est de nouveau ouvert.',
+        last_reason = 'RÃ©ponse incorrecte : le buzzer est de nouveau ouvert.',
         version = version + 1, updated_at = v_now
     where id = p_room_id;
   end if;
@@ -537,7 +545,7 @@ begin
         active_player = null, round_winner = v_seat,
         phase_deadline = null, total_deadline = null,
         last_reason = format(
-          '%s gagne : son adversaire ne s’est pas reconnecté dans les 30 secondes.',
+          '%s gagne : son adversaire ne sâ€™est pas reconnectÃ© dans les 30 secondes.',
           (select display_name
            from public.elite_pixel_room_players
            where room_id = p_room_id and seat = v_seat)
@@ -551,10 +559,10 @@ begin
     return;
   end if;
 
-  if v_room.total_deadline is not null and v_now >= v_room.total_deadline then
+  if v_room.total_deadline is not null and clock_timestamp() >= v_room.total_deadline then
     update public.elite_pixel_rooms
     set phase = 'reveal', active_player = null, round_winner = null,
-        phase_deadline = null, last_reason = 'Temps écoulé : aucun point pour cette manche.',
+        phase_deadline = null, last_reason = 'Temps Ã©coulÃ© : aucun point pour cette manche.',
         version = version + 1, updated_at = v_now
     where id = p_room_id;
   elsif v_room.phase_deadline is not null and v_now >= v_room.phase_deadline then
@@ -563,20 +571,20 @@ begin
       update public.elite_pixel_rooms
       set phase = 'exclusive', active_player = v_other,
           phase_deadline = least(total_deadline, v_now + interval '30 seconds'),
-          last_reason = 'Temps de réponse écoulé : chance exclusive à l’adversaire.',
+          last_reason = 'Temps de rÃ©ponse Ã©coulÃ© : chance exclusive Ã  lâ€™adversaire.',
           version = version + 1, updated_at = v_now
       where id = p_room_id;
     elsif v_room.phase = 'exclusive' then
       update public.elite_pixel_rooms
       set phase = 'shared', active_player = null,
           phase_deadline = least(total_deadline, v_now + interval '60 seconds'),
-          last_reason = 'Temps exclusif écoulé : le buzzer est de nouveau ouvert.',
+          last_reason = 'Temps exclusif Ã©coulÃ© : le buzzer est de nouveau ouvert.',
           version = version + 1, updated_at = v_now
       where id = p_room_id;
     else
       update public.elite_pixel_rooms
       set phase = 'reveal', active_player = null, round_winner = null,
-          phase_deadline = null, last_reason = 'Personne n’a buzzé : aucun point pour cette manche.',
+          phase_deadline = null, last_reason = 'Personne nâ€™a buzzÃ© : aucun point pour cette manche.',
           version = version + 1, updated_at = v_now
       where id = p_room_id;
     end if;
@@ -603,11 +611,13 @@ security definer
 set search_path = pg_catalog, public
 as $$
 declare
+  v_seat smallint;
   v_room public.elite_pixel_rooms%rowtype;
   v_puzzle_id uuid;
+  v_all_ready boolean;
   v_now timestamptz := clock_timestamp();
 begin
-  perform public.elite_pixel_member_seat(p_room_id);
+  v_seat := public.elite_pixel_member_seat(p_room_id);
   select * into v_room
   from public.elite_pixel_rooms
   where id = p_room_id
@@ -615,6 +625,22 @@ begin
 
   if v_room.phase not in ('reveal', 'match_finished') then
     raise exception 'ROUND_NOT_FINISHED' using errcode = 'P0001';
+  end if;
+
+  update public.elite_pixel_room_players
+  set round_ready = true, last_seen = v_now
+  where room_id = p_room_id and seat = v_seat;
+
+  select count(*) = 2 and bool_and(round_ready)
+  into v_all_ready
+  from public.elite_pixel_room_players
+  where room_id = p_room_id;
+
+  if not coalesce(v_all_ready, false) then
+    update public.elite_pixel_rooms
+    set version = version + 1, updated_at = v_now
+    where id = p_room_id;
+    return;
   end if;
 
   select id into v_puzzle_id
@@ -638,6 +664,10 @@ begin
       round_winner = null, last_reason = null, finished_at = null,
       version = version + 1, updated_at = v_now
   where id = p_room_id;
+
+  update public.elite_pixel_room_players
+  set round_ready = false
+  where room_id = p_room_id;
 end;
 $$;
 
@@ -671,8 +701,8 @@ begin
     update public.elite_pixel_rooms
     set status = 'finished', phase = 'match_finished', scores = v_scores,
         active_player = null, round_winner = v_other, phase_deadline = null,
-        last_reason = format('%s gagne : son adversaire a quitté la partie.',
-          coalesce((select display_name from public.elite_pixel_room_players where room_id = p_room_id and seat = v_other), 'L’adversaire')),
+        last_reason = format('%s gagne : son adversaire a quittÃ© la partie.',
+          coalesce((select display_name from public.elite_pixel_room_players where room_id = p_room_id and seat = v_other), 'Lâ€™adversaire')),
         finished_at = clock_timestamp(), version = version + 1, updated_at = clock_timestamp()
     where id = p_room_id;
   end if;
@@ -727,4 +757,5 @@ begin
   end if;
 end;
 $$;
+
 
