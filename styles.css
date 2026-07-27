@@ -1082,7 +1082,7 @@ kbd {
   .local-page .game-shell {
     display: flex;
     flex-direction: column;
-    width: min(1450px, calc(100% - 20px));
+    width: min(1800px, calc(100% - 20px));
     height: 100dvh;
     padding: 10px 0 12px;
   }
@@ -1091,7 +1091,8 @@ kbd {
   .local-page .game-header,
   .local-page .scoreboard,
   .local-page .game-status,
-  .local-page .fusion-legend {
+  .local-page .fusion-legend,
+  .local-page .end-menu-button {
     flex: 0 0 auto;
   }
 
@@ -1129,9 +1130,10 @@ kbd {
   }
 
   .local-page .puzzle-layout {
-    flex: 0 1 auto;
-    height: clamp(390px, calc(100dvh - 360px), 610px);
+    flex: 1 1 0;
+    height: auto;
     min-height: 0;
+    max-height: 900px;
     gap: 10px;
     margin-top: 8px;
   }
@@ -1159,7 +1161,7 @@ kbd {
   }
 
   .local-page .model-grid {
-    width: min(100%, 220px);
+    width: min(100%, clamp(220px, 31dvh, 330px));
     margin: auto;
   }
 
@@ -1232,7 +1234,7 @@ kbd {
   .online-page.game-active .game-shell {
     display: flex;
     flex-direction: column;
-    width: min(1450px, calc(100% - 20px));
+    width: min(1800px, calc(100% - 20px));
     height: 100dvh;
     padding: 9px 0 10px;
   }
@@ -1241,7 +1243,8 @@ kbd {
   .online-page.game-active .game-header,
   .online-page.game-active .scoreboard,
   .online-page.game-active .game-status,
-  .online-page.game-active .fusion-legend {
+  .online-page.game-active .fusion-legend,
+  .online-page.game-active .end-menu-button {
     flex: 0 0 auto;
   }
 
@@ -1284,9 +1287,10 @@ kbd {
   }
 
   .online-page.game-active .puzzle-layout {
-    flex: 0 1 auto;
-    height: clamp(390px, calc(100dvh - 350px), 610px);
+    flex: 1 1 0;
+    height: auto;
     min-height: 0;
+    max-height: 900px;
     gap: 9px;
     margin-top: 7px;
   }
@@ -1310,7 +1314,7 @@ kbd {
   }
 
   .online-page.game-active .model-grid {
-    width: min(100%, 205px);
+    width: min(100%, clamp(205px, 30dvh, 320px));
     margin: auto;
   }
 
