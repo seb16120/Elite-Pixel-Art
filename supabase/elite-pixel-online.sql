@@ -21,6 +21,7 @@ create table if not exists public.elite_pixel_rooms (
   active_player smallint check (active_player in (1, 2)),
   phase_deadline timestamptz,
   total_deadline timestamptz,
+  round_ready_deadline timestamptz,
   puzzle_seed bigint,
   puzzle_id uuid references public.elite_pixel_puzzles(id),
   scores smallint[] not null default array[0, 0]::smallint[] check (cardinality(scores) = 2),
@@ -34,6 +35,9 @@ create table if not exists public.elite_pixel_rooms (
 
 alter table public.elite_pixel_rooms
   add column if not exists puzzle_id uuid;
+
+alter table public.elite_pixel_rooms
+  add column if not exists round_ready_deadline timestamptz;
 
 alter table public.elite_pixel_rooms alter column score_limit set default 2;
 alter table public.elite_pixel_rooms drop constraint if exists elite_pixel_rooms_score_limit_check;
@@ -545,7 +549,7 @@ begin
         active_player = null, round_winner = v_seat,
         phase_deadline = null, total_deadline = null,
         last_reason = format(
-          '%s gagne : son adversaire ne sâ€™est pas reconnectÃ© dans les 30 secondes.',
+          '%s gagne : son adversaire ne s’est pas reconnecté dans les 30 secondes.',
           (select display_name
            from public.elite_pixel_room_players
            where room_id = p_room_id and seat = v_seat)
@@ -631,6 +635,14 @@ begin
   set round_ready = true, last_seen = v_now
   where room_id = p_room_id and seat = v_seat;
 
+  if v_room.round_ready_deadline is null then
+    update public.elite_pixel_rooms
+    set round_ready_deadline = v_now + interval '30 seconds',
+        version = version + 1,
+        updated_at = v_now
+    where id = p_room_id;
+  end if;
+
   select count(*) = 2 and bool_and(round_ready)
   into v_all_ready
   from public.elite_pixel_room_players
@@ -661,6 +673,7 @@ begin
       puzzle_id = v_puzzle_id,
       phase_deadline = v_now + interval '60 seconds',
       total_deadline = v_now + interval '5 minutes',
+      round_ready_deadline = null,
       round_winner = null, last_reason = null, finished_at = null,
       version = version + 1, updated_at = v_now
   where id = p_room_id;

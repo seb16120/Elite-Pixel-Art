@@ -44,7 +44,7 @@ button {
 }
 
 .game-shell {
-  width: min(1760px, calc(100% - 32px));
+  width: min(1450px, calc(100% - 32px));
   margin: 0 auto;
   padding: 28px 0 40px;
 }
@@ -1082,7 +1082,7 @@ kbd {
   .local-page .game-shell {
     display: flex;
     flex-direction: column;
-    width: min(1760px, calc(100% - 20px));
+    width: min(1450px, calc(100% - 20px));
     height: 100dvh;
     padding: 10px 0 12px;
   }
@@ -1129,7 +1129,8 @@ kbd {
   }
 
   .local-page .puzzle-layout {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
+    height: clamp(390px, calc(100dvh - 360px), 610px);
     min-height: 0;
     gap: 10px;
     margin-top: 8px;
@@ -1172,6 +1173,7 @@ kbd {
     grid-template-rows: repeat(3, minmax(0, 1fr));
     min-height: 0;
     gap: 6px;
+    overflow: hidden;
   }
 
   .local-page .puzzle-card {
@@ -1224,7 +1226,7 @@ kbd {
   .online-page.game-active .game-shell {
     display: flex;
     flex-direction: column;
-    width: min(1760px, calc(100% - 20px));
+    width: min(1450px, calc(100% - 20px));
     height: 100dvh;
     padding: 9px 0 10px;
   }
@@ -1276,7 +1278,8 @@ kbd {
   }
 
   .online-page.game-active .puzzle-layout {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
+    height: clamp(390px, calc(100dvh - 350px), 610px);
     min-height: 0;
     gap: 9px;
     margin-top: 7px;
@@ -1315,6 +1318,7 @@ kbd {
     grid-template-rows: repeat(3, minmax(0, 1fr));
     min-height: 0;
     gap: 5px;
+    overflow: hidden;
   }
 
   .online-page.game-active .puzzle-card {

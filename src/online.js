@@ -448,6 +448,36 @@ function playSolutionAnimations() {
   });
 }
 
+function updateReadyWaitUi() {
+  const phase = state?.room?.phase;
+  if (![PHASE.REVEAL, PHASE.FINISHED].includes(phase)) return;
+
+  const finished = phase === PHASE.FINISHED;
+  const me = getPlayer(state.seat);
+  const opponent = getPlayer(state.seat === 1 ? 2 : 1);
+  const deadline = state.room.round_ready_deadline;
+  const countdown = remaining(deadline);
+  const readyWindowExpired = Boolean(deadline) && countdown <= 0;
+
+  show(el['main-menu-button'], finished || readyWindowExpired);
+
+  if (me?.round_ready) {
+    el['next-round-button'].textContent = readyWindowExpired
+      ? `Prêt ✓ · délai écoulé pour ${opponent?.display_name ?? 'l’autre joueur'}`
+      : `Prêt ✓ · ${formatDuration(countdown)} pour ${opponent?.display_name ?? 'l’autre joueur'}`;
+  } else if (opponent?.round_ready && deadline) {
+    el['next-round-button'].textContent = readyWindowExpired
+      ? 'Le délai de préparation est écoulé'
+      : `Prêt pour rejoindre ${opponent.display_name} · ${formatDuration(countdown)}`;
+  } else {
+    el['next-round-button'].textContent = finished
+      ? `Prêt pour rejouer un ${scoreFormat()}`
+      : 'Prêt pour la manche suivante';
+  }
+
+  el['next-round-button'].disabled = Boolean(me?.round_ready) || !connected;
+}
+
 function renderDialog() {
   const phase = state.room.phase;
   const finished = phase === PHASE.FINISHED;
@@ -458,10 +488,7 @@ function renderDialog() {
     if (el['reveal-dialog'].open) el['reveal-dialog'].close();
     return;
   }
-  const me = getPlayer(state.seat);
-  const opponent = getPlayer(state.seat === 1 ? 2 : 1);
   show(el['close-reveal-button']);
-  show(el['main-menu-button'], finished);
   show(el['end-menu-button'], finishedDialogDismissed);
   el['end-menu-button'].textContent = finished
     ? 'Ouvrir le menu de fin de partie'
@@ -471,12 +498,7 @@ function renderDialog() {
   el['reveal-message'].textContent = phase === PHASE.FINISHED
     ? `Vous pouvez analyser la solution, puis relancer un nouveau ${scoreFormat()}.`
     : 'Comparez votre raisonnement à la solution avant la manche suivante.';
-  el['next-round-button'].textContent = me?.round_ready
-    ? `Prêt ✓ · En attente de ${opponent?.display_name ?? 'l’autre joueur'}…`
-    : finished
-      ? `Prêt pour rejouer un ${scoreFormat()}`
-      : 'Prêt pour la manche suivante';
-  el['next-round-button'].disabled = Boolean(me?.round_ready) || !connected;
+  updateReadyWaitUi();
   const solutionKey = `${puzzleSeed}:${state.room.round_number}`;
   if (renderedSolutionKey !== solutionKey) {
     renderSolutionEquation();
@@ -579,6 +601,7 @@ function tick() {
   el['phase-timer'].textContent = formatDuration(remaining(state.room.phase_deadline));
   el['total-timer'].textContent = formatDuration(remaining(state.room.total_deadline));
   renderPresenceWarning();
+  updateReadyWaitUi();
 }
 
 function pollDelay() {
