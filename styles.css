@@ -1177,24 +1177,30 @@ kbd {
   }
 
   .local-page .puzzle-card {
-    justify-content: center;
+    display: block;
     min-height: 0;
     padding: 6px;
-    gap: 6px;
     overflow: hidden;
     border-radius: 11px;
   }
 
   .local-page .card-grid {
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    left: 50%;
     width: auto;
-    height: 100%;
-    max-width: calc(100% - 24px);
-    max-height: 100%;
-    flex: 0 1 auto;
+    height: calc(100% - 12px);
+    max-width: calc(100% - 34px);
+    transform: translateX(-50%);
   }
 
   .local-page .card-number {
-    flex: 0 0 auto;
+    position: absolute;
+    top: 50%;
+    left: 7px;
+    z-index: 2;
+    transform: translateY(-50%);
     font-size: 0.68rem;
   }
 
@@ -1322,24 +1328,30 @@ kbd {
   }
 
   .online-page.game-active .puzzle-card {
-    justify-content: center;
+    display: block;
     min-height: 0;
-    gap: 5px;
     overflow: hidden;
     padding: 5px;
     border-radius: 10px;
   }
 
   .online-page.game-active .card-grid {
+    position: absolute;
+    top: 5px;
+    bottom: 5px;
+    left: 50%;
     width: auto;
-    height: 100%;
-    max-width: calc(100% - 23px);
-    max-height: 100%;
-    flex: 0 1 auto;
+    height: calc(100% - 10px);
+    max-width: calc(100% - 33px);
+    transform: translateX(-50%);
   }
 
   .online-page.game-active .card-number {
-    flex: 0 0 auto;
+    position: absolute;
+    top: 50%;
+    left: 6px;
+    z-index: 2;
+    transform: translateY(-50%);
     font-size: 0.66rem;
   }
 
